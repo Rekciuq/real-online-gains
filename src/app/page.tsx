@@ -1,11 +1,10 @@
+import { UserService } from "@/services/UserService";
+
 export default async function Home() {
-  const response = await fetch("http://localhost:3000/api/v1/database/users", {
-    method: "POST",
-    body: JSON.stringify({
-      name: "thing",
-      email: "damn",
-    }),
+  const response = await UserService.createUser({
+    name: "damn1",
+    email: "thing1",
   });
-  console.log(await response.json());
+  // console.log(response);
   return <p>Hello world!</p>;
 }
