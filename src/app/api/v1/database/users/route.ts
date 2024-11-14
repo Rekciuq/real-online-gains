@@ -17,11 +17,10 @@ export async function POST(request: NextRequest) {
     const response = await prisma.user.create({
       data: { name, email },
     });
+    return Response.json(response);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.log("here");
+      return Response.json(error);
     }
   }
-
-  return Response.json("thing");
 }
