@@ -14,7 +14,7 @@ export class UserService {
         }),
       }),
     );
-    // console.log(response);
+
     return [error, response];
   }
 }

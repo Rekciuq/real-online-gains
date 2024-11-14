@@ -1,9 +1,9 @@
 import BaseError from "@/services/errors/BaseError";
 
 class ErrorHandler {
-  static getFullPath<T extends BaseError<T["codeErrors"]>>(
-    error: T,
-    errorCode: keyof T["codeErrors"],
+  static getFullPath<T extends Record<string, string>, E extends BaseError<T>>(
+    error: E,
+    errorCode: keyof E["codeErrors"],
   ) {
     if (error.codeErrors[errorCode]) {
       return error.getPath() + "." + error.codeErrors[errorCode];
