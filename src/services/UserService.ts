@@ -1,11 +1,14 @@
 import { USERS_ROTE } from "@/constants/api/routes";
 import { User } from "@/types/models.type";
-import { handlePromise } from "@/utils/handlePromise";
 import { POST } from "@/constants/api/http-methods";
+import { handlePromiseClient } from "@/utils/handlePromiseClient";
+import { BaseErrorBodyType } from "@/types/common";
+
+type UserResponse = [BaseErrorBodyType | null, Response | null]
 
 export class UserService {
-  static async createUser(user: Omit<User, "id">) {
-    const [error, response] = await handlePromise(
+  static async createUser(user: Omit<User, "id">): Promise<UserResponse> {
+    const [error, response]: UserResponse = await handlePromiseClient(
       fetch(USERS_ROTE, {
         method: POST,
         body: JSON.stringify({
