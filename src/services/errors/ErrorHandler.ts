@@ -1,3 +1,4 @@
+import { PRISMA_CLIENT_ERROR_P2002 } from "@/constants/errors/prisma-client-errors";
 import BaseError from "@/services/errors/BaseError";
 
 class ErrorHandler {
@@ -8,7 +9,7 @@ class ErrorHandler {
     if (error.codeErrors[errorCode]) {
       return error.getPath() + "." + error.codeErrors[errorCode];
     }
-    throw new Error("This error is not handled!");
+    throw new Error(PRISMA_CLIENT_ERROR_P2002);
   }
 }
 
