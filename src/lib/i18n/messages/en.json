@@ -1,1 +1,10 @@
-{}
+{
+  "ERRORS": {
+    "SERVER": {
+      "PRISMA": {
+        "THIS_PROPERTY_ALREADY_EXISTS": "This {property} already exist!"
+      }
+    },
+    "CLIENT": {}
+  }
+}

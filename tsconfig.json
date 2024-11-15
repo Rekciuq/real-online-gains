@@ -46,6 +46,12 @@
       ],
       "@/types/*": [
         "./src/types/*"
+      ],
+      "@/database/*": [
+        "./database/*"
+      ],
+      "@/seed/*": [
+        "./seed/*"
       ]
     }
   },
