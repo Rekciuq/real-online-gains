@@ -1,3 +1,4 @@
+import { NETWORK_ERROR } from "@/constants/errors/api-server-errors";
 import { BaseErrorBodyType } from "@/types/common";
 
 export async function handlePromiseClient(
@@ -14,7 +15,7 @@ export async function handlePromiseClient(
 
     return [null, await result.json()];
   } catch {
-    throw new Error("Network Error!")
+    throw new Error(NETWORK_ERROR)
   }
 }
 
