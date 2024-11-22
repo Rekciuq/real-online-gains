@@ -11,7 +11,59 @@ datasource db {
 }
 
 model User {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
+  id           Int       @id @default(autoincrement())
+  username     String
+  firstName    String?
+  lastName     String?
+  email        String    @unique
+  password     String
+  profileImage Bytes
+  bio          String?
+  gender       String?
+  birthDate    DateTime?
+  isBlocked    Boolean   @default(false)
+  roleId       Int
+  role         Role      @relation(fields: [roleId], references: [id])
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  users       User[]
+  permissions RolePermission[]
+}
+
+model PermissionType {
+  id                   Int                    @id @default(autoincrement())
+  name                 String                 @unique
+  permissionTypeAction PermissionTypeAction[]
+}
+
+model PermissionAction {
+  id                     Int                  @id @default(autoincrement())
+  action                 String               @unique
+  permissionTypeAction   PermissionTypeAction @relation(fields: [permissionTypeActionId], references: [id])
+  permissionTypeActionId Int
+}
+
+model Permission {
+  id             Int              @id @default(autoincrement())
+  rolePermission RolePermission[]
+}
+
+model RolePermission {
+  id           Int        @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+}
+
+model PermissionTypeAction {
+  id                 Int                @id @default(autoincrement())
+  permissionActionId Int
+  permissionTypeId   Int
+  permissionType     PermissionType     @relation(fields: [permissionTypeId], references: [id])
+  permissionActions  PermissionAction[]
+  permissionId       Int
 }
