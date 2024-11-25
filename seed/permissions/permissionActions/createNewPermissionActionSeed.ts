@@ -1,15 +1,15 @@
+import { SeedPermissionAction } from "../../types"
 import prisma from "@/lib/prisma";
-import { SeedUser } from "@/seed/types";
 
-type CreateNewUserSeedProps = {
-  user: SeedUser;
-};
+type PermissionActionProps = {
+  permissionAction: SeedPermissionAction
+}
 
-export const createNewUserSeed = async ({ user }: CreateNewUserSeedProps) => {
-  await prisma.user.create({
+export const createNewPermissionActionSeed = async ({ permissionAction }: PermissionActionProps) => {
+
+  await prisma.permissionAction.create({
     data: {
-      name: user.name,
-      email: user.email,
+      name: permissionAction.name,
     },
   });
-};
+}
