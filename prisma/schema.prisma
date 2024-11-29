@@ -5,8 +5,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// TODO: Check every seed function to be correct for last version of this file
-
 datasource db {
   provider = "sqlite"
   url      = "file:../database/db.db"
@@ -17,6 +15,7 @@ model User {
   username     String
   firstName    String?
   lastName     String?
+  fullName     String?
   email        String    @unique
   password     String
   profileImage Bytes

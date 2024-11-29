@@ -3,6 +3,7 @@ import { createRandomUsersSeed } from "@/seed/profiles/users/createRandomUsersSe
 import { createPredefinedRolesSeed } from "./roles/createPredefinedRolesSeed";
 import { createPredefinedPermissionTypesSeed } from "./permissions/permissionTypes/createPredefinedPermissionTypesSeed";
 import { createPredefinedPermissionActionsSeed } from "./permissions/permissionActions/createPredefinedPermissionActionsSeed";
+import createPredefinedPermissionsSeed from "./permissions/createPredefinedPermissionsSeed";
 
 const main = async () => {
   prisma.$connect();
@@ -11,6 +12,7 @@ const main = async () => {
   await createPredefinedPermissionTypesSeed();
   await createPredefinedPermissionActionsSeed();
   await createPredefinedRolesSeed();
+  await createPredefinedPermissionsSeed();
   await createRandomUsersSeed();
 
   console.log("Seeding database was successfully!");
