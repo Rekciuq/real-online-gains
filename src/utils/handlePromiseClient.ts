@@ -9,13 +9,11 @@ export async function handlePromiseClient(
 
     if (!result.ok) {
       const error: BaseErrorBodyType = await result.json();
-      return [error, null]
+      return [error, null];
     }
-
 
     return [null, await result.json()];
   } catch {
-    throw new Error(NETWORK_ERROR)
+    throw new Error(NETWORK_ERROR);
   }
 }
-

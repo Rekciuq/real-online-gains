@@ -14,29 +14,32 @@ export async function handlePromiseServer<T>(
   try {
     const result = await promise;
 
+    console.log("If result is okay", result);
     if (result instanceof Response) {
       if (result.ok) {
-        return [null, await result.json()];
+        const resultSuccess = await result.json();
+        return [null, resultSuccess];
       } else {
         const error = await result.json();
 
-        return [error, null]
+        return [error, null];
       }
     }
 
     return [null, result];
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-
       const errorPath = ErrorHandler.getFullPath(
         prismaError,
         error.code as keyof typeof PRISMA_ERROR_CODES,
       );
 
-      const option = Array.isArray(error.meta?.target) ? error.meta?.target[0] : error.meta?.target;
+      const option = Array.isArray(error.meta?.target)
+        ? error.meta?.target[0]
+        : error.meta?.target;
 
       if (option && error.code === PRISMA_CLIENT_ERROR_P2002) {
-        const options = { property: option as string }
+        const options = { property: option as string };
 
         const customError = {
           body: { message: errorPath, options },
@@ -44,9 +47,11 @@ export async function handlePromiseServer<T>(
         };
 
         return [customError, null];
-
       }
-      throw new Error(UNHANDLED_NETWORK_ERROR)
+    }
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      console.log(error.name);
+      throw new Error(UNHANDLED_NETWORK_ERROR);
     }
 
     throw new Error(UNHANDLED_NETWORK_ERROR);
