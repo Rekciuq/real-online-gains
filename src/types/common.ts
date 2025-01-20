@@ -1,10 +1,6 @@
-import { TranslationValues } from "next-intl"
+import { ComponentPropsWithoutRef } from "react";
 
-export type BaseErrorType = {
-  body: BaseErrorBodyType
-  status: number
-}
-export type BaseErrorBodyType = {
-  message: string,
-  options?: TranslationValues
-}
+export type InputsTypeProps = ComponentPropsWithoutRef<"input"> & {
+  id: string;
+  className?: string;
+};
