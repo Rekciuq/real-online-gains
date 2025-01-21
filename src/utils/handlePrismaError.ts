@@ -1,7 +1,7 @@
 import { UNHANDLED_NETWORK_ERROR } from "@/constants/errors/api-server-errors";
 import { Prisma } from "@prisma/client";
 
-const handlePrismaError = (error: unknown): string => {
+const handlePrismaError = (error: unknown) => {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError ||
     error instanceof Prisma.PrismaClientUnknownRequestError ||
@@ -9,10 +9,10 @@ const handlePrismaError = (error: unknown): string => {
     error instanceof Prisma.PrismaClientInitializationError ||
     error instanceof Prisma.PrismaClientValidationError
   ) {
-    return error.message;
+    return error;
   }
   if (error instanceof Error) {
-    return error.message;
+    return error;
   }
 
   return UNHANDLED_NETWORK_ERROR;

@@ -7,8 +7,9 @@ import {
   SERVER_ERROR,
 } from "@/constants/api/http-codes";
 import { SeedUser } from "@/seed/types";
+import bcrypt from "bcrypt";
 import signupSchema from "@/schemas/auth/signup.schema";
-import ImageService from "@/services/ImageService";
+import PrismaService from "@/services/server/PrismaService";
 
 export async function GET() {
   const [error, users] = await handlePromiseServer(prisma.user.findMany());
@@ -21,7 +22,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const Requestjson = await request.json();
 
-  console.log(Requestjson);
   const parseResult = signupSchema.safeParse(Requestjson);
 
   if (!parseResult.success) {
@@ -39,28 +39,29 @@ export async function POST(request: NextRequest) {
     birthDate,
   } = parseResult.data;
 
+  const date = new Date(birthDate);
+
+  const saltRounds = 10;
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const cryptedPassword = bcrypt.hashSync(password, salt);
+
   const newUser: SeedUser = {
     email,
-    password,
-    profileImage: await ImageService.convertFromFileToBytes(profileImage),
+    password: cryptedPassword,
+    profileImage: Buffer.from(profileImage),
     firstName: firstName ?? null,
     lastName: lastName ?? null,
     bio: bio ?? null,
     gender: gender ?? null,
-    birthDate: new Date(birthDate) ?? null,
-    roleId: 0,
+    birthDate: isNaN(date.getTime()) ? null : date,
+    roleId: 1,
     isBlocked: false,
   };
 
-  const [error] = await handlePromiseServer(
-    prisma.user.create({
-      data: newUser,
-    }),
-  );
+  const [error, response] = await PrismaService.createUser(newUser);
 
   if (error !== null) {
-    console.log(error);
-    return Response.json(error, { status: SERVER_ERROR });
+    return Response.json(error, { status: 401 });
   }
-  return Response.json({ status: CREATED_SUCCESS });
+  return Response.json(response, { status: CREATED_SUCCESS });
 }

@@ -11,10 +11,26 @@ import { useEffect, useState } from "react";
 import UserService from "@/services/client/UserService";
 import ToastEmitter from "@/services/client/ToastEmitter";
 import Header from "../ui/Header";
-import ImageService from "@/services/ImageService";
+import { useRouter } from "next/navigation";
+import { DASHBOARD_PAGE } from "@/constants/pageRoutes";
+
+// Make a server action form that function someday
+const convertFromFileToBase64 = async (file: File): Promise<string> => {
+  const arrayBuffer = new Uint8Array(await file.arrayBuffer());
+  let binaryString = "";
+
+  const CHUNK_SIZE = 64 * 1024;
+  for (let i = 0; i < arrayBuffer.length; i += CHUNK_SIZE) {
+    const chunk = arrayBuffer.slice(i, i + CHUNK_SIZE);
+    binaryString += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binaryString);
+};
 
 const userService = new UserService();
 const Signup = () => {
+  const router = useRouter();
   const [submittedData, setSubmittedData] = useState<SignupSchemaType | null>(
     null,
   );
@@ -26,12 +42,14 @@ const Signup = () => {
 
   useEffect(() => {
     if (data) {
+      router.push(DASHBOARD_PAGE);
       ToastEmitter.success("Your registration was completed!");
     }
     if (error) {
-      ToastEmitter.error(`Error! ${error.message}`);
+      console.error(error);
+      ToastEmitter.error(`Error! ${error}`);
     }
-  }, [data, error]);
+  }, [data, error, router]);
 
   const handleSubmit = async (fieldValues: SignupSchemaType) => {
     const {
@@ -43,6 +61,7 @@ const Signup = () => {
       profileImage,
       ...restFields
     } = fieldValues;
+    const file = await convertFromFileToBase64(profileImage[0]);
 
     const newUser: SignupSchemaType = {
       firstName: firstName ?? null,
@@ -50,7 +69,7 @@ const Signup = () => {
       bio: bio ?? null,
       gender: gender ?? null,
       birthDate: birthDate ?? null,
-      profileImage: await ImageService.convertFromFileToBase64(profileImage[0]),
+      profileImage: file,
       ...restFields,
     };
 

@@ -28,20 +28,17 @@ class ImageService {
     return this.convertFromBufferToWebPBuffer(await image.arrayBuffer());
   };
 
-  static convertFromFileToBase64 = (file: File) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+  static convertFromFileToBase64 = async (file: File): Promise<string> => {
+    const arrayBuffer = new Uint8Array(await file.arrayBuffer());
+    let binaryString = "";
 
-      reader.onloadend = () => {
-        resolve(reader.result);
-      };
+    const CHUNK_SIZE = 64 * 1024;
+    for (let i = 0; i < arrayBuffer.length; i += CHUNK_SIZE) {
+      const chunk = arrayBuffer.slice(i, i + CHUNK_SIZE);
+      binaryString += String.fromCharCode(...chunk);
+    }
 
-      reader.onerror = () => {
-        reject(new Error("Failed to read the file"));
-      };
-
-      reader.readAsDataURL(file);
-    });
+    return btoa(binaryString);
   };
 
   private static convertFromBufferToWebPBuffer = (image: ArrayBuffer) => {

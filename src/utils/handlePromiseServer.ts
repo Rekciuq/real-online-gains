@@ -3,7 +3,7 @@ import handlePrismaError from "./handlePrismaError";
 
 export async function handlePromiseServer<T>(
   promise: Prisma.PrismaPromise<T>,
-): Promise<[string | null, T | null]> {
+): Promise<[unknown | null, T | null]> {
   try {
     const result = await promise;
 
