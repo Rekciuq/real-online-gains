@@ -4,7 +4,7 @@ import signupSchema from "@/schemas/auth/signup.schema";
 import Form from "../ui/form/Form";
 import InputGroup from "../ui/form/inputs/InputGroup";
 import { SignupSchemaType } from "@/types/schemas";
-import { BUTTON_SUBMIT_TEXT } from "@/constants/text/buttonsText";
+import { BUTTON_SIGNUP_TEXT } from "@/constants/text/buttons";
 import { KEY_CREATE_USER } from "@/constants/tanstackQueryKeys";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -13,6 +13,7 @@ import ToastEmitter from "@/services/client/ToastEmitter";
 import Header from "../ui/Header";
 import { useRouter } from "next/navigation";
 import { DASHBOARD_PAGE } from "@/constants/pageRoutes";
+import { SIGNUP_HEADER } from "@/constants/text/header";
 
 // Make a server action form that function someday
 const convertFromFileToBase64 = async (file: File): Promise<string> => {
@@ -77,7 +78,7 @@ const Signup = () => {
   };
   return (
     <Form schema={signupSchema} handleSubmit={handleSubmit}>
-      <Header>{"Signup"}</Header>
+      <Header>{SIGNUP_HEADER}</Header>
       <InputGroup>
         <InputGroup.Label htmlFor="profileImage" inputTitle="Profile Image" />
         <InputGroup.ImageInput id="profileImage" />
@@ -137,7 +138,7 @@ const Signup = () => {
       </InputGroup>
 
       <Form.Submit intent="submit" size="big" disabled={isLoading}>
-        {BUTTON_SUBMIT_TEXT}
+        {BUTTON_SIGNUP_TEXT}
       </Form.Submit>
     </Form>
   );
