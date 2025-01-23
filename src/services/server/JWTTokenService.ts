@@ -49,6 +49,12 @@ class JWTTokenService {
 
   verifyToken = (token: string, tokenType: TOKEN_TYPE) => {
     try {
+      const decodedToken = jwt.decode(token, { complete: true });
+      const expirationDate = new Date(decodedToken?.payload.exp * 1000);
+      const currentDate = new Date();
+      if (currentDate >= expirationDate) {
+        return [{ message: "Token is expired" }, null];
+      }
       const verifiedToken = jwt.verify(
         token,
         tokenType === ACCESS_TOKEN

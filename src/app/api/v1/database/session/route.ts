@@ -49,40 +49,43 @@ export async function POST(request: NextRequest) {
 export async function PUT() {
   const cookiesStore = await cookies();
   const refreshToken = cookiesStore.get(REFRESH_TOKEN)?.value;
+  const accessToken = cookiesStore.get(ACCESS_TOKEN)?.value;
+  console.log(accessToken);
+  console.log(refreshToken);
 
-  if (refreshToken) {
-    const [verifyError, verifiedToken] = jwtService.verifyToken(
-      refreshToken,
-      "refresh",
-    );
-
-    if (verifyError) {
-      return Response.json({ status: BAD_REQUEST });
-    }
-
-    cookiesStore.delete(REFRESH_TOKEN);
-    cookiesStore.delete(ACCESS_TOKEN);
-
-    const tokens = jwtService.generateTokens(
-      (verifiedToken as { userId: number }).userId,
-    );
-
-    cookiesStore.set(ACCESS_TOKEN, tokens.accessToken);
-    cookiesStore.set(REFRESH_TOKEN, tokens.refreshToken);
-
-    const [error] = await SessionService.updateSession(
-      refreshToken,
-      tokens.refreshToken,
-      (verifiedToken as { userId: number }).userId,
-    );
-
-    if (error) {
-      return Response.json(error, { status: BAD_REQUEST });
-    }
-    return Response.json({ status: SUCCESS });
+  if (!refreshToken) {
+    return Response.json("Token doesn't exist", { status: BAD_REQUEST });
   }
 
-  return Response.json({ status: BAD_REQUEST });
+  const [verifyError, verifiedToken] = jwtService.verifyToken(
+    refreshToken,
+    REFRESH_TOKEN,
+  );
+
+  if (verifyError) {
+    return Response.json("Token is not valid", { status: BAD_REQUEST });
+  }
+
+  cookiesStore.delete(REFRESH_TOKEN);
+  cookiesStore.delete(ACCESS_TOKEN);
+
+  const tokens = jwtService.generateTokens(
+    (verifiedToken as { userId: number }).userId,
+  );
+
+  cookiesStore.set(ACCESS_TOKEN, tokens.accessToken);
+  cookiesStore.set(REFRESH_TOKEN, tokens.refreshToken);
+
+  const [error] = await SessionService.updateSession(
+    refreshToken,
+    tokens.refreshToken,
+    (verifiedToken as { userId: number }).userId,
+  );
+
+  if (error) {
+    return Response.json(error, { status: BAD_REQUEST });
+  }
+  return Response.json({ status: SUCCESS });
 }
 
 export async function DELETE() {
