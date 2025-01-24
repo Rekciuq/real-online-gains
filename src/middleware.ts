@@ -79,6 +79,11 @@ export async function middleware(request: NextRequest) {
           Cookie: `access=${accessToken}; Path=/; SameSite=None; Secure; refresh=${refreshToken}; Path=/; SameSite=None; Secure; ${attemptedRefresh?.value ? "attemptedRefresh=" + attemptedRefresh?.value + "; Path=/; SameSite=None; Secure;" : ""}`,
         },
       });
+
+      if (!response.ok) {
+        return NextResponse.redirect(new URL(LOGOUT_ROUTE, request.url));
+      }
+
       const { tokens } = await response.json();
 
       nextResponse.cookies.delete(ACCESS_TOKEN);
@@ -95,10 +100,6 @@ export async function middleware(request: NextRequest) {
         secure: true,
         path: "/",
       });
-
-      if (!response.ok) {
-        return NextResponse.redirect(new URL(LOGOUT_ROUTE, request.url));
-      }
     }
   }
 
