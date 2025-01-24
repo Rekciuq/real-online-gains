@@ -1,5 +1,5 @@
 import { cva, VariantProps } from "class-variance-authority";
-import Loader from "./Loader";
+import Loader from "./icons/Loader";
 import { cn } from "@/lib/utils";
 
 const button = cva("button", {

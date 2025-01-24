@@ -1,11 +1,10 @@
-import { Prisma } from "@prisma/client";
 import handlePrismaError from "./handlePrismaError";
 
 export async function handlePromiseServer<T>(
-  promise: Prisma.PrismaPromise<T>,
-): Promise<[unknown | null, T | null]> {
+  fn: () => Promise<T>,
+): Promise<[string | null, null] | [null, null | T]> {
   try {
-    const result = await promise;
+    const result = await fn();
 
     return [null, result];
   } catch (error) {

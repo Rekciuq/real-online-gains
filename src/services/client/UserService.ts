@@ -1,3 +1,4 @@
+"use client";
 import { USERS_ROUTE } from "@/constants/api/routes";
 import HttpService from "../HttpService";
 import { SeedUser } from "@/seed/types";

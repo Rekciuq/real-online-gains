@@ -1,10 +1,9 @@
-import { NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { handlePromiseServer } from "@/utils/handlePromiseServer";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  BAD_REQUEST,
-  CREATED_SUCCESS,
-  SERVER_ERROR,
+  HTTP_BAD_REQUEST_CODE,
+  HTTP_CREATED_SUCCESS_CODE,
+  HTTP_SERVER_ERROR_CODE,
+  HTTP_SUCCESS_CODE,
 } from "@/constants/api/http-codes";
 import { SeedUser } from "@/seed/types";
 import bcrypt from "bcrypt";
@@ -12,11 +11,14 @@ import signupSchema from "@/schemas/auth/signup.schema";
 import UserService from "@/services/server/UserService";
 
 export async function GET() {
-  const [error, users] = await handlePromiseServer(prisma.user.findMany());
+  const { error, response } = await UserService.getUsers();
   if (error) {
-    return Response.json(error, { status: SERVER_ERROR });
+    return NextResponse.json(
+      { message: error },
+      { status: HTTP_SERVER_ERROR_CODE },
+    );
   }
-  return Response.json(users);
+  return NextResponse.json(response, { status: HTTP_SUCCESS_CODE });
 }
 
 export async function POST(request: NextRequest) {
@@ -25,7 +27,12 @@ export async function POST(request: NextRequest) {
   const parseResult = signupSchema.safeParse(Requestjson);
 
   if (!parseResult.success) {
-    return Response.json(parseResult.error.format(), { status: BAD_REQUEST });
+    return NextResponse.json(
+      { message: parseResult.error.format() },
+      {
+        status: HTTP_BAD_REQUEST_CODE,
+      },
+    );
   }
 
   const {
@@ -37,6 +44,7 @@ export async function POST(request: NextRequest) {
     bio,
     gender,
     birthDate,
+    role,
   } = parseResult.data;
 
   const date = new Date(birthDate);
@@ -54,14 +62,18 @@ export async function POST(request: NextRequest) {
     bio: bio ?? null,
     gender: gender ?? null,
     birthDate: isNaN(date.getTime()) ? null : date,
-    roleId: 1,
+    roleId: Number(role),
     isBlocked: false,
   };
 
-  const [error, response] = await UserService.createUser(newUser);
+  const { error, response } = await UserService.createUser(newUser);
 
   if (error !== null) {
-    return Response.json(error, { status: 401 });
+    return NextResponse.json(
+      { message: error },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
   }
-  return Response.json(response, { status: CREATED_SUCCESS });
+
+  return NextResponse.json(response, { status: HTTP_CREATED_SUCCESS_CODE });
 }

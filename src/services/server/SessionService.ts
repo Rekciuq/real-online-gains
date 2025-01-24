@@ -1,18 +1,17 @@
 import prisma from "@/lib/prisma";
+import { handlePromiseServer } from "@/utils/handlePromiseServer";
 
 class SessionService {
   static createSession = async (refreshToken: string, userId: number) => {
-    try {
-      const response = await prisma.session.create({
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.session.create({
         data: {
           refreshToken,
           userId,
         },
-      });
-      return [null, response];
-    } catch (error) {
-      return [error, null];
-    }
+      }),
+    );
+    return { error, response };
   };
 
   static updateSession = async (
@@ -20,27 +19,32 @@ class SessionService {
     newRefreshToken: string,
     userId: number,
   ) => {
-    try {
-      const response = await prisma.session.delete({
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.session.delete({
         where: { refreshToken: oldRefreshToken },
-      });
+      }),
+    );
 
-      await this.createSession(newRefreshToken, userId);
-      return [null, response];
-    } catch (error) {
-      return [error, null];
+    const { error: createError } = await this.createSession(
+      newRefreshToken,
+      userId,
+    );
+
+    if (createError) {
+      return { createError, response: null };
     }
+
+    return { error, response };
   };
 
   static deleteSession = async (refreshToken: string) => {
-    try {
-      const response = await prisma.session.delete({
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.session.delete({
         where: { refreshToken: refreshToken },
-      });
-      return [null, response];
-    } catch (error) {
-      return [error, null];
-    }
+      }),
+    );
+
+    return { error, response };
   };
 }
 

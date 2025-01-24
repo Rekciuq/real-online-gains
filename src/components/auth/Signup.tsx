@@ -7,15 +7,16 @@ import { SignupSchemaType } from "@/types/schemas";
 import { BUTTON_SIGNUP_TEXT } from "@/constants/text/buttons";
 import { KEY_CREATE_USER } from "@/constants/tanstackQueryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import UserService from "@/services/client/UserService";
-import ToastEmitter from "@/services/client/ToastEmitter";
 import Header from "../ui/Header";
 import { useRouter } from "next/navigation";
-import { DASHBOARD_PAGE } from "@/constants/pageRoutes";
 import { SIGNUP_HEADER } from "@/constants/text/header";
+import { LOGIN_ROUTE } from "@/constants/routes";
+import { TOAST_MESSAGE_SUCCESS_SIGNUP } from "@/constants/toastMessages/success";
+import useHandleResponseClient from "@/hooks/useHandleResponseClient.hook";
+import { DB_TRAINER_ROLE, DB_USER_ROLE } from "@/constants/database";
 
-// Make a server action form that function someday
 const convertFromFileToBase64 = async (file: File): Promise<string> => {
   const arrayBuffer = new Uint8Array(await file.arrayBuffer());
   let binaryString = "";
@@ -41,16 +42,12 @@ const Signup = () => {
     enabled: !!submittedData,
   });
 
-  useEffect(() => {
-    if (data) {
-      router.push(DASHBOARD_PAGE);
-      ToastEmitter.success("Your registration was completed!");
-    }
-    if (error) {
-      console.error(error);
-      ToastEmitter.error(`Error! ${error}`);
-    }
-  }, [data, error, router]);
+  useHandleResponseClient({
+    data,
+    error,
+    successMessage: TOAST_MESSAGE_SUCCESS_SIGNUP,
+    dataCb: () => router.push(LOGIN_ROUTE),
+  });
 
   const handleSubmit = async (fieldValues: SignupSchemaType) => {
     const {
@@ -122,6 +119,23 @@ const Signup = () => {
         <InputGroup.Label htmlFor="bio" inputTitle="Bio (Optional)" />
         <InputGroup.TextArea id="bio" />
         <InputGroup.ErrorMessage inputName="bio" />
+      </InputGroup>
+      <InputGroup>
+        <InputGroup.Label htmlFor="role" inputTitle="I want to be:" />
+        <div>
+          <div className="flex gap-2">
+            <InputGroup.Label htmlFor="" inputTitle="An user:" />
+            <InputGroup.RadioInput id="role" value={DB_USER_ROLE.toString()} />
+          </div>
+          <div className="flex gap-2">
+            <InputGroup.Label htmlFor="" inputTitle="A Trainer:" />
+            <InputGroup.RadioInput
+              id="role"
+              value={DB_TRAINER_ROLE.toString()}
+            />
+          </div>
+        </div>
+        <InputGroup.ErrorMessage inputName="role" />
       </InputGroup>
       <InputGroup>
         <InputGroup.Label htmlFor="password" inputTitle="Password" />

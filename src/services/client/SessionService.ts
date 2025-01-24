@@ -10,8 +10,6 @@ class SessionService extends HttpService {
   }
   createSession = (data: LoginSchemaType) =>
     this.post<LoginSchemaType>({ data: data });
-  updateSession = () => {};
-  deleteSession = () => {};
 }
 
 export default SessionService;

@@ -1,12 +1,24 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import loginSchema from "@/schemas/auth/login.schema";
-import { BAD_REQUEST, SUCCESS } from "@/constants/api/http-codes";
+import {
+  HTTP_BAD_REQUEST_CODE,
+  HTTP_SUCCESS_CODE,
+} from "@/constants/api/http-codes";
 import UserService from "@/services/server/UserService";
 import JWTTokenService from "@/services/server/JWTTokenService";
-import { cookies } from "next/headers";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "@/constants/api/jwt";
+import {
+  ACCESS_TOKEN,
+  ATTEMPTED_REFRESH,
+  REFRESH_TOKEN,
+} from "@/constants/api/jwt";
 import SessionService from "@/services/server/SessionService";
+import {
+  JWT_TOKEN_DOESNT_EXIST_ERROR,
+  WRONG_CREDENTIALS_ERROR,
+  WRONG_JWT_TOKEN_ERROR,
+} from "@/constants/errors/api-server-errors";
+import { LOGGED_OUT } from "@/constants/success/api";
 
 const jwtService = new JWTTokenService();
 export async function POST(request: NextRequest) {
@@ -14,7 +26,12 @@ export async function POST(request: NextRequest) {
   const parseResult = loginSchema.safeParse(requestJson);
 
   if (!parseResult.success) {
-    return Response.json(parseResult.error.format(), { status: BAD_REQUEST });
+    return NextResponse.json(
+      { message: parseResult.error.format() },
+      {
+        status: HTTP_BAD_REQUEST_CODE,
+      },
+    );
   }
 
   const { email, password } = parseResult.data;
@@ -22,86 +39,142 @@ export async function POST(request: NextRequest) {
   const { error, response } = await UserService.getUser(email);
 
   if (error) {
-    return Response.json(error, { status: BAD_REQUEST });
+    return NextResponse.json(
+      { message: error },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
   }
 
   const isMatching = bcrypt.compareSync(password, response!.password);
+
   if (!isMatching) {
-    return Response.json({ status: BAD_REQUEST });
+    return NextResponse.json(
+      { message: WRONG_CREDENTIALS_ERROR },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
   }
+
   const tokens = jwtService.generateTokens(response!.id);
 
-  const cookiesStore = await cookies();
-  cookiesStore.set(ACCESS_TOKEN, tokens.accessToken);
-  cookiesStore.set(REFRESH_TOKEN, tokens.refreshToken);
-  const [sessionError] = await SessionService.createSession(
+  const nextResponse = NextResponse.json({ status: HTTP_SUCCESS_CODE });
+  nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
+    httpOnly: true,
+    secure: true,
+    path: "/",
+  });
+
+  nextResponse.cookies.set(REFRESH_TOKEN, tokens.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    path: "/",
+  });
+
+  const { error: sessionError } = await SessionService.createSession(
     tokens.refreshToken,
     response!.id,
   );
 
   if (sessionError) {
-    return Response.json({ status: BAD_REQUEST });
+    return NextResponse.json(
+      { message: sessionError },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
   }
 
-  return Response.json(tokens, { status: 200 });
+  return nextResponse;
 }
 
-export async function PUT() {
-  const cookiesStore = await cookies();
-  const refreshToken = cookiesStore.get(REFRESH_TOKEN)?.value;
-  const accessToken = cookiesStore.get(ACCESS_TOKEN)?.value;
-  console.log(accessToken);
-  console.log(refreshToken);
+export async function PUT(request: NextRequest) {
+  const refreshToken = request.cookies.get(REFRESH_TOKEN)?.value;
 
   if (!refreshToken) {
-    return Response.json("Token doesn't exist", { status: BAD_REQUEST });
+    const nextResponse = NextResponse.json(
+      { message: JWT_TOKEN_DOESNT_EXIST_ERROR },
+      {
+        status: HTTP_BAD_REQUEST_CODE,
+      },
+    );
+
+    nextResponse.cookies.set(ATTEMPTED_REFRESH, "true", {
+      httpOnly: true,
+      secure: true,
+      path: "/",
+    });
+
+    return nextResponse;
   }
 
-  const [verifyError, verifiedToken] = jwtService.verifyToken(
+  const [verifyError, verifiedToken] = await jwtService.verifyToken(
     refreshToken,
     REFRESH_TOKEN,
   );
 
   if (verifyError) {
-    return Response.json("Token is not valid", { status: BAD_REQUEST });
+    const nextResponse = NextResponse.json(
+      { message: WRONG_JWT_TOKEN_ERROR },
+      {
+        status: HTTP_BAD_REQUEST_CODE,
+      },
+    );
+
+    nextResponse.cookies.set(ATTEMPTED_REFRESH, "true", {
+      httpOnly: true,
+      secure: true,
+      path: "/",
+    });
+
+    return nextResponse;
   }
 
-  cookiesStore.delete(REFRESH_TOKEN);
-  cookiesStore.delete(ACCESS_TOKEN);
+  const tokens = jwtService.generateTokens(verifiedToken.payload.userId);
 
-  const tokens = jwtService.generateTokens(
-    (verifiedToken as { userId: number }).userId,
-  );
+  const nextResponse = NextResponse.json({ status: HTTP_SUCCESS_CODE });
 
-  cookiesStore.set(ACCESS_TOKEN, tokens.accessToken);
-  cookiesStore.set(REFRESH_TOKEN, tokens.refreshToken);
+  nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
+    httpOnly: true,
+    secure: true,
+    path: "/",
+  });
+  nextResponse.cookies.set(REFRESH_TOKEN, tokens.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    path: "/",
+  });
 
-  const [error] = await SessionService.updateSession(
+  const { error } = await SessionService.updateSession(
     refreshToken,
     tokens.refreshToken,
-    (verifiedToken as { userId: number }).userId,
+    verifiedToken.payload.userId,
   );
 
   if (error) {
-    return Response.json(error, { status: BAD_REQUEST });
+    return NextResponse.json(
+      { message: error },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
   }
-  return Response.json({ status: SUCCESS });
+  return nextResponse;
 }
 
-export async function DELETE() {
-  const cookiesStore = await cookies();
-  const refreshToken = cookiesStore.get(REFRESH_TOKEN)?.value;
+export async function DELETE(request: NextRequest) {
+  const refreshToken = request.cookies.get(REFRESH_TOKEN)?.value;
+
+  const nextResponse = NextResponse.json(
+    { message: LOGGED_OUT },
+    { status: HTTP_SUCCESS_CODE },
+  );
 
   if (refreshToken) {
-    cookiesStore.delete(REFRESH_TOKEN);
-    cookiesStore.delete(ACCESS_TOKEN);
+    const { error } = await SessionService.deleteSession(refreshToken);
 
-    const [error] = await SessionService.deleteSession(refreshToken);
     if (error) {
-      return Response.json(error, { status: BAD_REQUEST });
+      return NextResponse.json(
+        { message: error },
+        { status: HTTP_BAD_REQUEST_CODE },
+      );
     }
-    return Response.json({ status: SUCCESS });
+    return nextResponse;
   }
 
-  return Response.json({ status: BAD_REQUEST });
+  return nextResponse;
 }

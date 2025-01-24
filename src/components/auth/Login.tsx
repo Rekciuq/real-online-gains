@@ -9,11 +9,16 @@ import { LOGIN_HEADER } from "@/constants/text/header";
 import { BUTTON_LOGIN_TEXT } from "@/constants/text/buttons";
 import { useQuery } from "@tanstack/react-query";
 import { KEY_LOGIN } from "@/constants/tanstackQueryKeys";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SessionService from "@/services/client/SessionService";
+import { useRouter } from "next/navigation";
+import { DASHBOARD_PAGE } from "@/constants/pageRoutes";
+import { TOAST_MESSAGE_SUCCESS_LOGIN } from "@/constants/toastMessages/success";
+import useHandleResponseClient from "@/hooks/useHandleResponseClient.hook";
 
 const sessionService = new SessionService();
 const Login = () => {
+  const router = useRouter();
   const [submittedData, setSubmittedData] = useState<LoginSchemaType | null>(
     null,
   );
@@ -24,14 +29,12 @@ const Login = () => {
     enabled: !!submittedData,
   });
 
-  useEffect(() => {
-    if (data) {
-      console.log(data);
-    }
-
-    if (error) {
-    }
-  }, [data, error]);
+  useHandleResponseClient({
+    data,
+    error,
+    successMessage: TOAST_MESSAGE_SUCCESS_LOGIN,
+    dataCb: () => router.push(DASHBOARD_PAGE),
+  });
 
   const handleSubmit = (fieldValues: LoginSchemaType) => {
     setSubmittedData(fieldValues);

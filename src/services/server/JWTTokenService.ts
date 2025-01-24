@@ -6,6 +6,7 @@ import {
 } from "@/constants/api/jwt";
 import { TOKEN_TYPE } from "@/types/jwt";
 import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
 class JWTTokenService {
   private accessTokenSecret: string;
@@ -47,19 +48,13 @@ class JWTTokenService {
     };
   };
 
-  verifyToken = (token: string, tokenType: TOKEN_TYPE) => {
+  verifyToken = async (token: string, tokenType: TOKEN_TYPE): Promise<any> => {
     try {
-      const decodedToken = jwt.decode(token, { complete: true });
-      const expirationDate = new Date(decodedToken?.payload.exp * 1000);
-      const currentDate = new Date();
-      if (currentDate >= expirationDate) {
-        return [{ message: "Token is expired" }, null];
-      }
-      const verifiedToken = jwt.verify(
+      const verifiedToken = await jwtVerify(
         token,
         tokenType === ACCESS_TOKEN
-          ? this.accessTokenSecret
-          : this.refreshTokenSecret,
+          ? new TextEncoder().encode(this.accessTokenSecret)
+          : new TextEncoder().encode(this.refreshTokenSecret),
       );
 
       return [null, verifiedToken];

@@ -1,27 +1,33 @@
 import prisma from "@/lib/prisma";
 import { SeedUser } from "@/seed/types";
+import { handlePromiseServer } from "@/utils/handlePromiseServer";
 
 class UserService {
   static createUser = async (newUser: SeedUser) => {
-    const data = { data: newUser };
-    try {
-      const response = await prisma.user.create(data);
-      return [null, response];
-    } catch (error) {
-      return [error, null];
-    }
+    const preparedData = { data: newUser };
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.user.create(preparedData),
+    );
+
+    return { error, response };
   };
 
   static getUser = async (email: string) => {
-    try {
-      const response = await prisma.user.findUniqueOrThrow({
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.user.findUniqueOrThrow({
         where: { email },
-      });
+      }),
+    );
 
-      return { error: null, response: response };
-    } catch (error) {
-      return { error: error, response: null };
-    }
+    return { error, response };
+  };
+
+  static getUsers = async () => {
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.user.findMany(),
+    );
+
+    return { error, response };
   };
 }
 

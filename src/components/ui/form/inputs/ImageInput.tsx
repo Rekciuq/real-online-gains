@@ -19,7 +19,8 @@ const ImageInput = ({ id, className, ...props }: InputsTypeProps) => {
   const { ref, ...rest } = register(id, {
     onChange: (event) => {
       const file: File = event.target.files?.[0];
-      if (!file.type.startsWith(IMAGE_PREFIX)) {
+      if (!file || !file.type.startsWith(IMAGE_PREFIX)) {
+        clearInput(event);
         return;
       }
 
