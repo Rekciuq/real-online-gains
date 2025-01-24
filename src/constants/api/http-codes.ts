@@ -1,0 +1,4 @@
+export const HTTP_SUCCESS_CODE = 200;
+export const HTTP_CREATED_SUCCESS_CODE = 201;
+export const HTTP_SERVER_ERROR_CODE = 500;
+export const HTTP_BAD_REQUEST_CODE = 400;
