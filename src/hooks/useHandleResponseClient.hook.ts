@@ -4,7 +4,7 @@ import { useEffect } from "react";
 type handleResponseClientProps<T> = {
   data?: T;
   error: Error | null;
-  successMessage: string;
+  successMessage?: string;
   dataCb?: (data: T) => void;
   errorCb?: (error: string) => void;
 };
@@ -21,7 +21,9 @@ const useHandleResponseClient = <T>({
       if (dataCb) {
         dataCb(data);
       }
-      ToastEmitter.success(successMessage);
+      if (successMessage) {
+        ToastEmitter.success(successMessage);
+      }
     }
   }, [data, dataCb, successMessage]);
 

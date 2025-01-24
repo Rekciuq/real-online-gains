@@ -3,11 +3,11 @@
 import signupSchema from "@/schemas/auth/signup.schema";
 import Form from "../ui/form/Form";
 import InputGroup from "../ui/form/inputs/InputGroup";
-import { SignupSchemaType } from "@/types/schemas";
+import { LoginSchemaType, SignupSchemaType } from "@/types/schemas";
 import { BUTTON_SIGNUP_TEXT } from "@/constants/text/buttons";
-import { KEY_CREATE_USER } from "@/constants/tanstackQueryKeys";
+import { KEY_CREATE_USER, KEY_LOGIN } from "@/constants/tanstackQueryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import UserService from "@/services/client/UserService";
 import Header from "../ui/Header";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,8 @@ import { LOGIN_ROUTE } from "@/constants/routes";
 import { TOAST_MESSAGE_SUCCESS_SIGNUP } from "@/constants/toastMessages/success";
 import useHandleResponseClient from "@/hooks/useHandleResponseClient.hook";
 import { DB_TRAINER_ROLE, DB_USER_ROLE } from "@/constants/database";
+import SessionService from "@/services/client/SessionService";
+import loginSchema from "@/schemas/auth/login.schema";
 
 const convertFromFileToBase64 = async (file: File): Promise<string> => {
   const arrayBuffer = new Uint8Array(await file.arrayBuffer());
@@ -31,22 +33,53 @@ const convertFromFileToBase64 = async (file: File): Promise<string> => {
 };
 
 const userService = new UserService();
+const sessionService = new SessionService();
 const Signup = () => {
   const router = useRouter();
   const [submittedData, setSubmittedData] = useState<SignupSchemaType | null>(
     null,
   );
+  const [loggingData, setLoggingData] = useState<LoginSchemaType | null>(null);
+
   const { isLoading, data, error } = useQuery({
     queryKey: KEY_CREATE_USER,
     queryFn: () => submittedData && userService.createUser(submittedData),
     enabled: !!submittedData,
   });
 
+  const {
+    isLoading: isSigninLoading,
+    data: singinData,
+    error: singingError,
+  } = useQuery({
+    queryKey: KEY_LOGIN,
+    queryFn: () => loggingData && sessionService.createSession(loggingData),
+    enabled: !!loggingData,
+  });
+
   useHandleResponseClient({
     data,
     error,
+  });
+
+  useEffect(() => {
+    if (!submittedData) {
+      return;
+    }
+
+    const { email, password } = submittedData;
+    const requiredData = loginSchema.safeParse({ email, password });
+
+    if (requiredData.data) {
+      setLoggingData(requiredData.data);
+    }
+    router.push(LOGIN_ROUTE);
+  }, [router, submittedData]);
+
+  useHandleResponseClient({
+    data: singinData,
+    error: singingError,
     successMessage: TOAST_MESSAGE_SUCCESS_SIGNUP,
-    dataCb: () => router.push(LOGIN_ROUTE),
   });
 
   const handleSubmit = async (fieldValues: SignupSchemaType) => {
@@ -122,15 +155,18 @@ const Signup = () => {
       </InputGroup>
       <InputGroup>
         <InputGroup.Label htmlFor="role" inputTitle="I want to be:" />
-        <div>
-          <div className="flex gap-2">
+        <div className="my-2">
+          <div className="grid grid-cols-2 gap-3">
             <InputGroup.Label htmlFor="" inputTitle="An user:" />
-            <InputGroup.RadioInput id="role" value={DB_USER_ROLE.toString()} />
-          </div>
-          <div className="flex gap-2">
+            <InputGroup.RadioInput
+              id="role"
+              className="self-end place-self-end"
+              value={DB_USER_ROLE.toString()}
+            />
             <InputGroup.Label htmlFor="" inputTitle="A Trainer:" />
             <InputGroup.RadioInput
               id="role"
+              className="self-end place-self-end"
               value={DB_TRAINER_ROLE.toString()}
             />
           </div>
@@ -151,7 +187,11 @@ const Signup = () => {
         <InputGroup.ErrorMessage inputName="confirmPassword" />
       </InputGroup>
 
-      <Form.Submit intent="submit" size="big" disabled={isLoading}>
+      <Form.Submit
+        intent="submit"
+        size="big"
+        disabled={isLoading || isSigninLoading}
+      >
         {BUTTON_SIGNUP_TEXT}
       </Form.Submit>
     </Form>
