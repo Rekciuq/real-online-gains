@@ -24,8 +24,10 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_TOKEN)?.value;
   const attemptedRefresh = request.cookies.get(ATTEMPTED_REFRESH);
 
+  const nextResponse = NextResponse.next();
+
   if (checkRoute.startsWith(API_ROUTE)) {
-    return NextResponse.next();
+    return nextResponse;
   }
 
   if (checkRoute.startsWith(LOGOUT_ROUTE)) {
@@ -40,7 +42,8 @@ export async function middleware(request: NextRequest) {
       method: "DELETE",
       headers: {
         "Content-type": "application/json",
-        Cookie: `access=${accessToken}; refresh=${refreshToken}; attemptedRefresh=${attemptedRefresh};`,
+        "x-middleware-cache": "no-cache",
+        Cookie: `access=${accessToken}; refresh=${refreshToken}; ${attemptedRefresh?.value ? "attemptedRefresh=" + attemptedRefresh?.value + ";" : ""}`,
       },
     });
 
@@ -52,7 +55,7 @@ export async function middleware(request: NextRequest) {
       checkRoute.startsWith(LOGIN_ROUTE) ||
       checkRoute.startsWith(SIGNUP_ROUTE)
     ) {
-      return NextResponse.next();
+      return nextResponse;
     }
     return NextResponse.redirect(new URL(LOGIN_ROUTE, request.url));
   }
@@ -68,15 +71,32 @@ export async function middleware(request: NextRequest) {
     );
 
     if (verifyAccessTokenError) {
-      const updatedResponse = await fetch(SESSION_ROUTE, {
+      const response = await fetch(SESSION_ROUTE, {
         method: "PUT",
         headers: {
           "Content-type": "application/json",
-          Cookie: `access=${accessToken}; refresh=${refreshToken}; attemptedRefresh=${attemptedRefresh}`,
+          "x-middleware-cache": "no-cache",
+          Cookie: `access=${accessToken}; Path=/; SameSite=None; Secure; refresh=${refreshToken}; Path=/; SameSite=None; Secure; ${attemptedRefresh?.value ? "attemptedRefresh=" + attemptedRefresh?.value + "; Path=/; SameSite=None; Secure;" : ""}`,
         },
       });
+      const { tokens } = await response.json();
 
-      if (!updatedResponse.ok) {
+      nextResponse.cookies.delete(ACCESS_TOKEN);
+      nextResponse.cookies.delete(REFRESH_TOKEN);
+
+      nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
+        httpOnly: true,
+        secure: true,
+        path: "/",
+      });
+
+      nextResponse.cookies.set(REFRESH_TOKEN, tokens.refreshToken, {
+        httpOnly: true,
+        secure: true,
+        path: "/",
+      });
+
+      if (!response.ok) {
         return NextResponse.redirect(new URL(LOGOUT_ROUTE, request.url));
       }
     }
@@ -89,7 +109,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(DASHBOARD_ROUTE, request.url));
   }
 
-  return NextResponse.next();
+  return nextResponse;
 }
 
 export const config = {

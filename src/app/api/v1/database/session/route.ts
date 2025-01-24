@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
   const tokens = jwtService.generateTokens(response!.id);
 
   const nextResponse = NextResponse.json({ status: HTTP_SUCCESS_CODE });
+
   nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
     httpOnly: true,
     secure: true,
@@ -128,18 +129,10 @@ export async function PUT(request: NextRequest) {
 
   const tokens = jwtService.generateTokens(verifiedToken.payload.userId);
 
-  const nextResponse = NextResponse.json({ status: HTTP_SUCCESS_CODE });
-
-  nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
-    httpOnly: true,
-    secure: true,
-    path: "/",
-  });
-  nextResponse.cookies.set(REFRESH_TOKEN, tokens.refreshToken, {
-    httpOnly: true,
-    secure: true,
-    path: "/",
-  });
+  const nextResponse = NextResponse.json(
+    { tokens },
+    { status: HTTP_SUCCESS_CODE },
+  );
 
   const { error } = await SessionService.updateSession(
     refreshToken,
@@ -147,12 +140,28 @@ export async function PUT(request: NextRequest) {
     verifiedToken.payload.userId,
   );
 
+  nextResponse.cookies.delete(ACCESS_TOKEN);
+  nextResponse.cookies.delete(REFRESH_TOKEN);
+
+  nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
+    httpOnly: true,
+    secure: true,
+    path: "/",
+  });
+
+  nextResponse.cookies.set(REFRESH_TOKEN, tokens.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    path: "/",
+  });
+
   if (error) {
     return NextResponse.json(
       { message: error },
       { status: HTTP_BAD_REQUEST_CODE },
     );
   }
+
   return nextResponse;
 }
 
