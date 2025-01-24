@@ -1,0 +1,9 @@
+{
+  "permissions": [
+    {
+      "roleId": "1",
+      "permissionTypeId": "1",
+      "permissionActionId": "1"
+    }
+  ]
+}

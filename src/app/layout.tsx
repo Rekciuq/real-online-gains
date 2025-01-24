@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { getLocale, getMessages } from "next-intl/server";
 import Providers from "@/components/Providers";
-import { NextIntlClientProvider } from "next-intl";
 import { ReactNode } from "react";
+import Notify from "@/components/ui/Notify";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,16 +27,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
   return (
-    <html lang={locale}>
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
-        </NextIntlClientProvider>
+        <Providers>{children}</Providers>
+        <Notify />
       </body>
     </html>
   );

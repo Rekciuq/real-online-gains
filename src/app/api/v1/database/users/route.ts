@@ -1,26 +1,79 @@
-import { NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { handlePromiseServer } from "@/utils/handlePromiseServer";
-import { CREATED_SUCCESS, SERVER_ERROR } from "@/constants/api/http-codes";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  HTTP_BAD_REQUEST_CODE,
+  HTTP_CREATED_SUCCESS_CODE,
+  HTTP_SERVER_ERROR_CODE,
+  HTTP_SUCCESS_CODE,
+} from "@/constants/api/http-codes";
+import { SeedUser } from "@/seed/types";
+import bcrypt from "bcrypt";
+import signupSchema from "@/schemas/auth/signup.schema";
+import UserService from "@/services/server/UserService";
 
 export async function GET() {
-  const [error, users] = await handlePromiseServer(prisma.user.findMany());
+  const { error, response } = await UserService.getUsers();
   if (error) {
-    return Response.json(error.body, { status: error.status || SERVER_ERROR });
+    return NextResponse.json(
+      { message: error },
+      { status: HTTP_SERVER_ERROR_CODE },
+    );
   }
-  return Response.json(users || {});
+  return NextResponse.json(response, { status: HTTP_SUCCESS_CODE });
 }
 
 export async function POST(request: NextRequest) {
-  const { name, email } = await request.json();
+  const Requestjson = await request.json();
 
-  const [error, response] = await handlePromiseServer(
-    prisma.user.create({
-      data: { name, email },
-    }),
-  );
-  if (error !== null) {
-    return Response.json(error.body, { status: error.status || SERVER_ERROR });
+  const parseResult = signupSchema.safeParse(Requestjson);
+
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { message: parseResult.error.format() },
+      {
+        status: HTTP_BAD_REQUEST_CODE,
+      },
+    );
   }
-  return Response.json(response, { status: CREATED_SUCCESS });
+
+  const {
+    email,
+    password,
+    profileImage,
+    firstName,
+    lastName,
+    bio,
+    gender,
+    birthDate,
+    role,
+  } = parseResult.data;
+
+  const date = new Date(birthDate);
+
+  const saltRounds = 10;
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const cryptedPassword = bcrypt.hashSync(password, salt);
+
+  const newUser: SeedUser = {
+    email,
+    password: cryptedPassword,
+    profileImage: Buffer.from(profileImage),
+    firstName: firstName ?? null,
+    lastName: lastName ?? null,
+    bio: bio ?? null,
+    gender: gender ?? null,
+    birthDate: isNaN(date.getTime()) ? null : date,
+    roleId: Number(role),
+    isBlocked: false,
+  };
+
+  const { error, response } = await UserService.createUser(newUser);
+
+  if (error !== null) {
+    return NextResponse.json(
+      { message: error },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
+  }
+
+  return NextResponse.json(response, { status: HTTP_CREATED_SUCCESS_CODE });
 }
