@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { SeedUser } from "@/seed/types";
+import { EditProfileType } from "@/types/schemas";
 import { handlePromiseServer } from "@/utils/handlePromiseServer";
 
 class UserService {
@@ -7,6 +8,19 @@ class UserService {
     const preparedData = { data: newUser };
     const [error, response] = await handlePromiseServer(() =>
       prisma.user.create(preparedData),
+    );
+
+    return { error, response };
+  };
+
+  static updateUser = async (user: EditProfileType) => {
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.user.update({
+        where: {
+          email: user.email,
+        },
+        data: user,
+      }),
     );
 
     return { error, response };

@@ -1,3 +1,3 @@
-const ChatsPage = () => <div></div>;
+const ChatsPage = () => <div>sdlkfjsKLFJSKfdjs</div>;
 
 export default ChatsPage;

@@ -9,6 +9,7 @@ import { SeedUser } from "@/seed/types";
 import bcrypt from "bcrypt";
 import signupSchema from "@/schemas/auth/signup.schema";
 import UserService from "@/services/server/UserService";
+import editProfileSchema from "@/schemas/profile/editProfile.schema";
 
 export async function GET() {
   const { error, response } = await UserService.getUsers();
@@ -22,9 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const Requestjson = await request.json();
+  const requestJson = await request.json();
 
-  const parseResult = signupSchema.safeParse(Requestjson);
+  const parseResult = signupSchema.safeParse(requestJson);
 
   if (!parseResult.success) {
     return NextResponse.json(
@@ -43,11 +44,8 @@ export async function POST(request: NextRequest) {
     lastName,
     bio,
     gender,
-    birthDate,
     role,
   } = parseResult.data;
-
-  const date = new Date(birthDate);
 
   const saltRounds = 10;
   const salt = bcrypt.genSaltSync(saltRounds);
@@ -61,7 +59,7 @@ export async function POST(request: NextRequest) {
     lastName: lastName ?? null,
     bio: bio ?? null,
     gender: gender ?? null,
-    birthDate: isNaN(date.getTime()) ? null : date,
+    birthDate: requestJson?.birthDate ? new Date(requestJson.birthDate) : null,
     roleId: Number(role),
     isBlocked: false,
   };
@@ -76,4 +74,39 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(response, { status: HTTP_CREATED_SUCCESS_CODE });
+}
+
+export async function PUT(request: NextRequest) {
+  const requestJson = await request.json();
+
+  const parseResult = editProfileSchema.safeParse(requestJson);
+
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { message: parseResult.error.format() },
+      {
+        status: HTTP_BAD_REQUEST_CODE,
+      },
+    );
+  }
+
+  const parsedResults = parseResult.data;
+
+  const updatedUser = {
+    ...parsedResults,
+    birthDate: requestJson?.birthDate ? new Date(requestJson.birthDate) : null,
+    imageId: requestJson?.imageId ? requestJson.imageId : null,
+  };
+
+  const { error, response } = await UserService.updateUser(updatedUser);
+  if (error !== null) {
+    return NextResponse.json(
+      { message: error },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
+  }
+  return NextResponse.json(
+    { ...response },
+    { status: HTTP_CREATED_SUCCESS_CODE },
+  );
 }

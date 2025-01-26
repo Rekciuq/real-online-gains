@@ -1,9 +1,8 @@
 "use client";
 import { USERS_API_ROUTE } from "@/constants/api/routes";
 import HttpService from "../HttpService";
-import { SeedUser } from "@/seed/types";
 import { User } from "@prisma/client";
-import { SignupSchemaType } from "@/types/schemas";
+import { EditProfileType, SignupSchemaType } from "@/types/schemas";
 
 class UserService extends HttpService {
   constructor() {
@@ -13,7 +12,8 @@ class UserService extends HttpService {
   getAll = () => this.get<User[]>({});
   createUser = (newUser: SignupSchemaType) =>
     this.post<SignupSchemaType>({ data: newUser });
-  updateUser = (updatedUser: User) => this.put<SeedUser>({ data: updatedUser });
+  updateUser = (updatedUser: EditProfileType | User) =>
+    this.put<User>({ data: updatedUser as User });
   deleteUser = (id: number) => this.delete({ url: `/${id}` });
 }
 

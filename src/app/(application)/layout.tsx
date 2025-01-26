@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/components/app/layout/header/Header";
+import SideBar from "@/components/app/layout/sidebar/SideBar";
 import { LOCAL_IMAGE, LOCAL_USER } from "@/constants/localStorageItems";
 import { LOGOUT_ROUTE } from "@/constants/routes";
 import LocalStorageService from "@/services/client/LocalStorageService";
@@ -16,6 +17,7 @@ export default function AppLayout({
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [image, setImage] = useState<Image | null>(null);
+  const [showNavigation, setShowNavigation] = useState(true);
 
   useEffect(() => {
     const user = LocalStorageService.getItem(LOCAL_USER);
@@ -25,6 +27,7 @@ export default function AppLayout({
     setUser(user);
     setImage(image);
   }, [router]);
+
   const firstname = user?.firstName ? user?.firstName : "";
   const lastname = user?.lastName ? user?.lastName : "";
   const fullName = firstname + " " + lastname;
@@ -32,11 +35,13 @@ export default function AppLayout({
   return (
     <div>
       <Header
+        showNavigation={showNavigation}
+        setNavigation={setShowNavigation}
         userFullName={!firstname && !lastname ? "" : fullName}
         imageSrc={image?.url}
       />
-      <p>App layout</p>
-      {children}
+      {showNavigation && <SideBar />}
+      <div className="p-10 m-10 flex justify-center">{children}</div>
     </div>
   );
 }
