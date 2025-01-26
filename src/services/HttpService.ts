@@ -3,7 +3,11 @@ import {
   NETWORK_ERROR,
   UNHANDLED_NETWORK_ERROR,
 } from "@/constants/errors/api-server-errors";
-import { RequestWithData, RequestWithoutData } from "@/types/httpTypes";
+import {
+  RequestWithData,
+  RequestWithFormData,
+  RequestWithoutData,
+} from "@/types/httpTypes";
 import axios, { AxiosInstance } from "axios";
 
 class HttpService {
@@ -12,11 +16,18 @@ class HttpService {
   constructor(baseURL: string) {
     this.instance = axios.create({
       baseURL: baseURL,
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
+    this.setupRequestInterceptor();
     this.setupResponseInterceptor();
+  }
+
+  private setupRequestInterceptor() {
+    this.instance.interceptors.request.use((config) => {
+      if (config.data instanceof FormData) {
+        delete config.headers["Content-Type"];
+      }
+      return config;
+    });
   }
 
   private setupResponseInterceptor() {
@@ -34,7 +45,7 @@ class HttpService {
     );
   }
 
-  async get<TData>({ url = "", config = {} }: RequestWithoutData) {
+  protected async get<TData>({ url = "", config = {} }: RequestWithoutData) {
     try {
       const response = await this.instance.get<TData>(url, config);
       return response.data;
@@ -43,7 +54,11 @@ class HttpService {
     }
   }
 
-  async post<TData>({ url = "", data, config = {} }: RequestWithData<TData>) {
+  protected async post<TData>({
+    url = "",
+    data,
+    config = {},
+  }: RequestWithData<TData>) {
     try {
       const response = await this.instance.post(url, data, config);
       return response.data;
@@ -52,7 +67,24 @@ class HttpService {
     }
   }
 
-  async put<TData>({ url = "", data, config = {} }: RequestWithData<TData>) {
+  protected async postForm<TData>({
+    url = "",
+    image,
+    config = {},
+  }: RequestWithFormData<TData>) {
+    try {
+      const response = await this.instance.postForm(url, image, config);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  protected async put<TData>({
+    url = "",
+    data,
+    config = {},
+  }: RequestWithData<TData>) {
     try {
       const response = await this.instance.put<TData>(url, data, config);
       return response.data;
@@ -61,7 +93,7 @@ class HttpService {
     }
   }
 
-  async delete({ url = "", config = {} }: RequestWithoutData) {
+  protected async delete({ url = "", config = {} }: RequestWithoutData) {
     try {
       const response = await this.instance.delete(url, config);
       return response.data;

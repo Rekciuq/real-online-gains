@@ -1,12 +1,15 @@
 import ToastEmitter from "@/services/client/ToastEmitter";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { useEffect } from "react";
 
 type handleResponseClientProps<T> = {
-  data?: T;
+  data?: T | null;
   error: Error | null;
-  successMessage: string;
+  successMessage?: string;
   dataCb?: (data: T) => void;
   errorCb?: (error: string) => void;
+  router?: AppRouterInstance;
+  link?: string;
 };
 
 const useHandleResponseClient = <T>({
@@ -15,24 +18,31 @@ const useHandleResponseClient = <T>({
   successMessage,
   errorCb,
   dataCb,
+  router,
+  link,
 }: handleResponseClientProps<T>) => {
   useEffect(() => {
+    if (!data) return;
+
     if (data) {
-      if (dataCb) {
-        dataCb(data);
+      if (dataCb) dataCb(data);
+
+      if (successMessage) ToastEmitter.success(successMessage);
+      if (router && link) {
+        router.push(link);
+        router.refresh();
       }
-      ToastEmitter.success(successMessage);
     }
-  }, [data, dataCb, successMessage]);
+  }, [data, dataCb, successMessage, router, link]);
 
   useEffect(() => {
-    if (error) {
-      if (typeof error === "string") {
-        if (errorCb) {
-          errorCb(error);
-        }
-        ToastEmitter.error(error);
+    if (!error) return;
+
+    if (typeof error === "string") {
+      if (errorCb) {
+        errorCb(error);
       }
+      ToastEmitter.error(error);
     }
   }, [error, errorCb]);
 };

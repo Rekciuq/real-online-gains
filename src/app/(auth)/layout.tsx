@@ -14,7 +14,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
   const pathname = usePathname();
   const isSignup = pathname === SIGNUP_ROUTE;
   return (
-    <div className="flex justify-center flex-col gap-3 items-center h-dvh">
+    <div className="flex justify-center flex-col gap-3 items-center min-h-dvh">
       <Card>{children}</Card>
       <div className="flex gap-2">
         <p>{REDIRECT_TO}</p>

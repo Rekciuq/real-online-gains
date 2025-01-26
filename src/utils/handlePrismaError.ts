@@ -11,6 +11,12 @@ const handlePrismaError = (error: unknown): string => {
     return error.message;
   }
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2025") {
+      if (error.meta?.modelName === "User") {
+        return "Incorrect email or password!";
+      }
+    }
+
     if (error.code === "P2002") {
       const properties = error.meta?.target;
       return `This properties already exists! ${properties}`;

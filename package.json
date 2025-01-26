@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "reset-db": "npx prisma migrate reset --force",
     "seed-db": "npx prisma db seed",
     "setup-env": "node scripts/generateSecretKeys.js",
-    "init": "npm ci && npm run setup-env && npm run reset-db"
+    "node-run-dev": "node scripts/nodeStartDevServer.js",
+    "node-kill-dev": "node scripts/nodeStopDevServer.js",
+    "init": "npm ci && npm run setup-env && npm run node-run-dev"
   },
   "dependencies": {
     "@eslint/eslintrc": "3.2.0",

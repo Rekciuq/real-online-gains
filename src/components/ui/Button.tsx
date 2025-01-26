@@ -5,7 +5,10 @@ import { cn } from "@/lib/utils";
 const button = cva("button", {
   variants: {
     intent: {
-      submit: "border border-emerald-300 focus-visible:outline-emerald-400",
+      submit:
+        "border border-emerald-300 hover:border-emerald-200 hover:bg-emerald-300 hover:text-white transition-colors focus-visible:outline-emerald-400",
+      danger:
+        "border border-red-300 hover:border-red-200 hover:bg-red-300 transition-colors hover:text-white focus:outline-red-400",
     },
     size: {
       small: "",
@@ -29,12 +32,17 @@ const Button = ({
   className,
   children,
 }: ButtonProps) => {
+  const lodaderColors = {
+    submit: "text-emerald-300",
+    danger: "text-red-300",
+  };
+
   return (
     <button className={cn(button({ intent, size, disabled, className }))}>
       <>
         {disabled ? (
           <div className="w-full h-full flex items-center justify-center">
-            <Loader className="h-6 text-emerald-300" />
+            <Loader className={cn("h-6", intent && lodaderColors[intent])} />
           </div>
         ) : (
           children
