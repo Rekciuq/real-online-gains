@@ -2,6 +2,8 @@ import { faker } from "@faker-js/faker/locale/en";
 import { SexType } from "@faker-js/faker";
 import { createNewUserSeed } from "@/seed/profiles/users/createNewUserSeed";
 import { SeedUser } from "@/seed/types";
+import { UPLOAD_IMAGE_API_ROUTE } from "@/constants/api/routes";
+import { POST } from "@/constants/api/http-methods";
 import ImageService from "@/services/ImageService";
 
 export const createRandomUsersSeed = async () => {
@@ -22,8 +24,16 @@ export const createRandomUsersSeed = async () => {
     });
     const birthDate = faker.date.birthdate();
     const password = faker.internet.password();
+
     const profilePic = faker.image.avatar();
-    const profileImage = await ImageService.convertFromURLToBytes(profilePic);
+    const preparedBody = await ImageService.convertURLTOFormData(profilePic);
+    const profileImage = await fetch(UPLOAD_IMAGE_API_ROUTE, {
+      method: POST,
+      body: preparedBody,
+    });
+
+    const { image } = await profileImage.json();
+
     const roleId = faker.number.int({ min: 1, max: 3 });
 
     const newUser: SeedUser = {
@@ -33,7 +43,7 @@ export const createRandomUsersSeed = async () => {
       gender,
       email,
       birthDate,
-      profileImage,
+      imageId: image.id,
       password,
       roleId,
       isBlocked: false,

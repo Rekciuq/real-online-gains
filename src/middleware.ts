@@ -7,13 +7,14 @@ import {
 } from "./constants/api/jwt";
 import {
   API_ROUTE,
+  CHATS_ROUTE,
   DASHBOARD_ROUTE,
   LOGIN_ROUTE,
   LOGOUT_ROUTE,
   SIGNUP_ROUTE,
 } from "./constants/routes";
 import JWTTokenService from "./services/server/JWTTokenService";
-import { SESSION_ROUTE } from "./constants/api/routes";
+import { SESSION_API_ROUTE } from "./constants/api/routes";
 
 const jwtService = new JWTTokenService();
 
@@ -24,23 +25,28 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_TOKEN)?.value;
   const attemptedRefresh = request.cookies.get(ATTEMPTED_REFRESH);
 
+  const nextResponse = NextResponse.next();
+
   if (checkRoute.startsWith(API_ROUTE)) {
-    return NextResponse.next();
+    return nextResponse;
+  }
+
+  if (checkRoute === DASHBOARD_ROUTE) {
+    return NextResponse.redirect(new URL(CHATS_ROUTE, request.url));
   }
 
   if (checkRoute.startsWith(LOGOUT_ROUTE)) {
-    const nextResponse = NextResponse.redirect(
-      new URL(LOGIN_ROUTE, request.url),
-    );
+    const nextResponse = NextResponse.next();
     nextResponse.cookies.delete(REFRESH_TOKEN);
     nextResponse.cookies.delete(ACCESS_TOKEN);
     nextResponse.cookies.delete(ATTEMPTED_REFRESH);
 
-    await fetch(SESSION_ROUTE, {
+    await fetch(SESSION_API_ROUTE, {
       method: "DELETE",
       headers: {
         "Content-type": "application/json",
-        Cookie: `access=${accessToken}; refresh=${refreshToken}; attemptedRefresh=${attemptedRefresh};`,
+        "x-middleware-cache": "no-cache",
+        Cookie: `access=${accessToken}; refresh=${refreshToken}; ${attemptedRefresh?.value ? "attemptedRefresh=" + attemptedRefresh?.value + ";" : ""}`,
       },
     });
 
@@ -52,7 +58,7 @@ export async function middleware(request: NextRequest) {
       checkRoute.startsWith(LOGIN_ROUTE) ||
       checkRoute.startsWith(SIGNUP_ROUTE)
     ) {
-      return NextResponse.next();
+      return nextResponse;
     }
     return NextResponse.redirect(new URL(LOGIN_ROUTE, request.url));
   }
@@ -68,17 +74,35 @@ export async function middleware(request: NextRequest) {
     );
 
     if (verifyAccessTokenError) {
-      const updatedResponse = await fetch(SESSION_ROUTE, {
+      const response = await fetch(SESSION_API_ROUTE, {
         method: "PUT",
         headers: {
           "Content-type": "application/json",
-          Cookie: `access=${accessToken}; refresh=${refreshToken}; attemptedRefresh=${attemptedRefresh}`,
+          "x-middleware-cache": "no-cache",
+          Cookie: `access=${accessToken}; Path=/; SameSite=None; Secure; refresh=${refreshToken}; Path=/; SameSite=None; Secure; ${attemptedRefresh?.value ? "attemptedRefresh=" + attemptedRefresh?.value + "; Path=/; SameSite=None; Secure;" : ""}`,
         },
       });
 
-      if (!updatedResponse.ok) {
+      if (!response.ok) {
         return NextResponse.redirect(new URL(LOGOUT_ROUTE, request.url));
       }
+
+      const { tokens } = await response.json();
+
+      nextResponse.cookies.delete(ACCESS_TOKEN);
+      nextResponse.cookies.delete(REFRESH_TOKEN);
+
+      nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
+        httpOnly: true,
+        secure: true,
+        path: "/",
+      });
+
+      nextResponse.cookies.set(REFRESH_TOKEN, tokens.refreshToken, {
+        httpOnly: true,
+        secure: true,
+        path: "/",
+      });
     }
   }
 
@@ -89,7 +113,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(DASHBOARD_ROUTE, request.url));
   }
 
-  return NextResponse.next();
+  return nextResponse;
 }
 
 export const config = {
