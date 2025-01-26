@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   const newUser: SeedUser = {
     email,
     password: cryptedPassword,
-    profileImage: Buffer.from(profileImage),
+    imageId: profileImage,
     firstName: firstName ?? null,
     lastName: lastName ?? null,
     bio: bio ?? null,

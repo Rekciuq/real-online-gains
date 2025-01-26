@@ -3,84 +3,66 @@
 import signupSchema from "@/schemas/auth/signup.schema";
 import Form from "../ui/form/Form";
 import InputGroup from "../ui/form/inputs/InputGroup";
-import { LoginSchemaType, SignupSchemaType } from "@/types/schemas";
+import { SignupSchemaType } from "@/types/schemas";
 import { BUTTON_SIGNUP_TEXT } from "@/constants/text/buttons";
-import { KEY_CREATE_USER, KEY_LOGIN } from "@/constants/tanstackQueryKeys";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import UserService from "@/services/client/UserService";
 import Header from "../ui/Header";
 import { useRouter } from "next/navigation";
 import { SIGNUP_HEADER } from "@/constants/text/header";
-import { LOGIN_ROUTE } from "@/constants/routes";
-import { TOAST_MESSAGE_SUCCESS_SIGNUP } from "@/constants/toastMessages/success";
-import useHandleResponseClient from "@/hooks/useHandleResponseClient.hook";
 import { DB_TRAINER_ROLE, DB_USER_ROLE } from "@/constants/database";
-import SessionService from "@/services/client/SessionService";
-import loginSchema from "@/schemas/auth/login.schema";
-
-const convertFromFileToBase64 = async (file: File): Promise<string> => {
-  const arrayBuffer = new Uint8Array(await file.arrayBuffer());
-  let binaryString = "";
-
-  const CHUNK_SIZE = 64 * 1024;
-  for (let i = 0; i < arrayBuffer.length; i += CHUNK_SIZE) {
-    const chunk = arrayBuffer.slice(i, i + CHUNK_SIZE);
-    binaryString += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binaryString);
-};
+import { TOAST_MESSAGE_SUCCESS_SIGNUP } from "@/constants/toastMessages/success";
+import { LOGIN_ROUTE } from "@/constants/routes";
+import ImageUploadClientService from "@/services/client/ImageUploadClientService";
+import { FORM_DATA_KEY_IMAGE } from "@/constants/formDataKeys";
+import ImageClientService from "@/services/client/ImageClientService";
+import { User, Image } from "@prisma/client";
+import ToastEmitter from "@/services/client/ToastEmitter";
 
 const userService = new UserService();
-const sessionService = new SessionService();
+const imageUploadClientService = new ImageUploadClientService();
+const imageClientService = new ImageClientService();
 const Signup = () => {
   const router = useRouter();
-  const [submittedData, setSubmittedData] = useState<SignupSchemaType | null>(
-    null,
-  );
-  const [loggingData, setLoggingData] = useState<LoginSchemaType | null>(null);
+  const [userData, setUserData] = useState<SignupSchemaType | null>(null);
 
-  const { isLoading, data, error } = useQuery({
-    queryKey: KEY_CREATE_USER,
-    queryFn: () => submittedData && userService.createUser(submittedData),
-    enabled: !!submittedData,
+  const { isPending, mutate: createUser } = useMutation<
+    User,
+    string,
+    SignupSchemaType
+  >({
+    mutationFn: (user) => {
+      setUserData({ ...user });
+      return userService.createUser(user);
+    },
+    onSuccess: () => {
+      ToastEmitter.success(TOAST_MESSAGE_SUCCESS_SIGNUP);
+      router.push(LOGIN_ROUTE);
+    },
+    onError: (error) => {
+      deleteImage(userData?.profileImage);
+      ToastEmitter.error(error);
+    },
   });
 
-  const {
-    isLoading: isSigninLoading,
-    data: singinData,
-    error: singingError,
-  } = useQuery({
-    queryKey: KEY_LOGIN,
-    queryFn: () => loggingData && sessionService.createSession(loggingData),
-    enabled: !!loggingData,
+  const { isPending: isImagePending, mutate: createImage } = useMutation<
+    { image: Image },
+    string,
+    FormData
+  >({
+    mutationFn: (imageFormData) =>
+      imageUploadClientService.createImage(imageFormData),
+    onSuccess: ({ image }) => {
+      const buf: SignupSchemaType = { ...userData!, profileImage: image.id };
+      createUser(buf);
+    },
   });
 
-  useHandleResponseClient({
-    data,
-    error,
-  });
-
-  useEffect(() => {
-    if (!submittedData) {
-      return;
-    }
-
-    const { email, password } = submittedData;
-    const requiredData = loginSchema.safeParse({ email, password });
-
-    if (requiredData.data) {
-      setLoggingData(requiredData.data);
-    }
-    router.push(LOGIN_ROUTE);
-  }, [router, submittedData]);
-
-  useHandleResponseClient({
-    data: singinData,
-    error: singingError,
-    successMessage: TOAST_MESSAGE_SUCCESS_SIGNUP,
-  });
+  const { isPending: isImageDelitionPending, mutate: deleteImage } =
+    useMutation<Image, string, number>({
+      mutationFn: (imageId) => imageClientService.deleteImage(imageId),
+    });
 
   const handleSubmit = async (fieldValues: SignupSchemaType) => {
     const {
@@ -92,7 +74,12 @@ const Signup = () => {
       profileImage,
       ...restFields
     } = fieldValues;
-    const file = await convertFromFileToBase64(profileImage[0]);
+    const formData = new FormData();
+    formData.append(
+      FORM_DATA_KEY_IMAGE,
+      new Blob([profileImage[0]], { type: profileImage[0].type }),
+    );
+    createImage(formData);
 
     const newUser: SignupSchemaType = {
       firstName: firstName ?? null,
@@ -100,11 +87,10 @@ const Signup = () => {
       bio: bio ?? null,
       gender: gender ?? null,
       birthDate: birthDate ?? null,
-      profileImage: file,
       ...restFields,
     };
 
-    setSubmittedData(newUser);
+    setUserData(newUser);
   };
   return (
     <Form schema={signupSchema} handleSubmit={handleSubmit}>
@@ -190,7 +176,7 @@ const Signup = () => {
       <Form.Submit
         intent="submit"
         size="big"
-        disabled={isLoading || isSigninLoading}
+        disabled={isPending || isImagePending || isImageDelitionPending}
       >
         {BUTTON_SIGNUP_TEXT}
       </Form.Submit>

@@ -7,37 +7,68 @@ import Header from "../ui/Header";
 import InputGroup from "../ui/form/inputs/InputGroup";
 import { LOGIN_HEADER } from "@/constants/text/header";
 import { BUTTON_LOGIN_TEXT } from "@/constants/text/buttons";
-import { useQuery } from "@tanstack/react-query";
-import { KEY_LOGIN } from "@/constants/tanstackQueryKeys";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { KEY_GET_IMAGE } from "@/constants/tanstackQueryKeys";
 import { useState } from "react";
 import SessionService from "@/services/client/SessionService";
 import { useRouter } from "next/navigation";
-import { DASHBOARD_PAGE } from "@/constants/pageRoutes";
 import { TOAST_MESSAGE_SUCCESS_LOGIN } from "@/constants/toastMessages/success";
 import useHandleResponseClient from "@/hooks/useHandleResponseClient.hook";
+import LocalStorageService from "@/services/client/LocalStorageService";
+import { LOCAL_IMAGE, LOCAL_USER } from "@/constants/localStorageItems";
+import { CHATS_ROUTE } from "@/constants/routes";
+import ImageClientService from "@/services/client/ImageClientService";
+import { User } from "@prisma/client";
+import ToastEmitter from "@/services/client/ToastEmitter";
 
 const sessionService = new SessionService();
+const imageClientService = new ImageClientService();
 const Login = () => {
   const router = useRouter();
-  const [submittedData, setSubmittedData] = useState<LoginSchemaType | null>(
-    null,
-  );
+  const [userData, setUserData] = useState<User | null>(null);
+  const [isUserSuccess, setIsUserSuccess] = useState(false);
 
-  const { isLoading, data, error } = useQuery({
-    queryKey: KEY_LOGIN,
-    queryFn: () => submittedData && sessionService.createSession(submittedData),
-    enabled: !!submittedData,
+  const { isPending, mutate: createSession } = useMutation<
+    User,
+    string,
+    LoginSchemaType
+  >({
+    mutationFn: (user) => {
+      return sessionService.createSession(user);
+    },
+    onSuccess: (data) => {
+      setUserData(data);
+      setIsUserSuccess(true);
+      LocalStorageService.setItem(LOCAL_USER, data);
+    },
+    onError: (error) => {
+      ToastEmitter.error(error);
+    },
+  });
+
+  const {
+    isLoading: isImageLoading,
+    data: imageData,
+    error: imageError,
+  } = useQuery({
+    queryKey: KEY_GET_IMAGE,
+    queryFn: () => userData && imageClientService.getImage(userData.imageId),
+    enabled: isUserSuccess,
   });
 
   useHandleResponseClient({
-    data,
-    error,
+    data: imageData,
+    error: imageError,
     successMessage: TOAST_MESSAGE_SUCCESS_LOGIN,
-    dataCb: () => router.push(DASHBOARD_PAGE),
+    router: router,
+    link: CHATS_ROUTE,
+    dataCb: () => {
+      LocalStorageService.setItem(LOCAL_IMAGE, imageData);
+    },
   });
 
   const handleSubmit = (fieldValues: LoginSchemaType) => {
-    setSubmittedData(fieldValues);
+    createSession(fieldValues);
   };
 
   return (
@@ -53,7 +84,11 @@ const Login = () => {
         <InputGroup.PasswordInput id="password" />
         <InputGroup.ErrorMessage inputName="password" />
       </InputGroup>
-      <Form.Submit intent="submit" size="big" disabled={isLoading}>
+      <Form.Submit
+        intent="submit"
+        size="big"
+        disabled={isPending || isImageLoading}
+      >
         {BUTTON_LOGIN_TEXT}
       </Form.Submit>
     </Form>

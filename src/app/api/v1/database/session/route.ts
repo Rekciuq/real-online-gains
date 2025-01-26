@@ -56,7 +56,10 @@ export async function POST(request: NextRequest) {
 
   const tokens = jwtService.generateTokens(response!.id);
 
-  const nextResponse = NextResponse.json({ status: HTTP_SUCCESS_CODE });
+  const nextResponse = NextResponse.json(
+    { ...response },
+    { status: HTTP_SUCCESS_CODE },
+  );
 
   nextResponse.cookies.set(ACCESS_TOKEN, tokens.accessToken, {
     httpOnly: true,
