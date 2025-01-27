@@ -24,14 +24,12 @@ const useHandleResponseClient = <T>({
   useEffect(() => {
     if (!data) return;
 
-    if (data) {
-      if (dataCb) dataCb(data);
+    if (dataCb) dataCb(data);
 
-      if (successMessage) ToastEmitter.success(successMessage);
-      if (router && link) {
-        router.push(link);
-        router.refresh();
-      }
+    if (successMessage) ToastEmitter.success(successMessage);
+
+    if (router && link) {
+      router.push(link);
     }
   }, [data, dataCb, successMessage, router, link]);
 

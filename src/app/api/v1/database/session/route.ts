@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const tokens = jwtService.generateTokens(response!.id);
+  const tokens = jwtService.generateTokens(response!.id, response!.roleId);
 
   const nextResponse = NextResponse.json(
     { ...response },
@@ -130,7 +130,10 @@ export async function PUT(request: NextRequest) {
     return nextResponse;
   }
 
-  const tokens = jwtService.generateTokens(verifiedToken.payload.userId);
+  const tokens = jwtService.generateTokens(
+    verifiedToken.payload.userId,
+    verifiedToken.payload.roleId,
+  );
 
   const nextResponse = NextResponse.json(
     { tokens },

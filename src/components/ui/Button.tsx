@@ -31,6 +31,7 @@ const Button = ({
   disabled,
   className,
   children,
+  onClick,
 }: ButtonProps) => {
   const lodaderColors = {
     submit: "text-emerald-300",
@@ -38,7 +39,10 @@ const Button = ({
   };
 
   return (
-    <button className={cn(button({ intent, size, disabled, className }))}>
+    <button
+      onClick={onClick}
+      className={cn(button({ intent, size, disabled, className }))}
+    >
       <>
         {disabled ? (
           <div className="w-full h-full flex items-center justify-center">
