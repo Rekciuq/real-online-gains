@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import UserService from "@/services/client/UserService";
-import { TOAST_MESSAGE_SUCCESS_SIGNUP } from "@/constants/toastMessages/success";
+import { TOAST_MESSAGE_SUCCESS_UPDATE_PROFILE } from "@/constants/toastMessages/success";
 import ImageUploadClientService from "@/services/client/ImageUploadClientService";
 import ImageClientService from "@/services/client/ImageClientService";
 import ToastEmitter from "@/services/client/ToastEmitter";
@@ -57,7 +57,7 @@ const ProfilePage = () => {
       }
 
       LocalStorageService.setItem(LOCAL_USER, { ...data });
-      ToastEmitter.success(TOAST_MESSAGE_SUCCESS_SIGNUP);
+      ToastEmitter.success(TOAST_MESSAGE_SUCCESS_UPDATE_PROFILE);
     },
     onError: (error) => {
       deleteImage(userData!.imageId);

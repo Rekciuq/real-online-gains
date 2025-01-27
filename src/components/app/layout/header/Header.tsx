@@ -47,7 +47,7 @@ const Header = ({
         )}
       </div>
       <div className="gap-2 flex justify-end items-center">
-        {!!imageSrc && !!userFullName ? (
+        {!!imageSrc && userFullName !== null ? (
           <>
             <p>{userFullName}</p>
             <Img src={imageSrc} alt="Profile Picture" />

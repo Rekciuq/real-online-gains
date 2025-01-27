@@ -5,4 +5,10 @@ export const DB_TRAINER_ROLE = 3;
 export const DB_ADMIN_DASHBOARD_PERMISSION = 1;
 export const DB_HAS_ACCESS_ACTION = 1;
 
+export const DB_ROLES = {
+  1: "Admin",
+  2: "User",
+  3: "Trainer",
+};
+
 export const IMAGE_QUALITY = 80;

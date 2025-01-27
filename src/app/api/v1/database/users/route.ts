@@ -80,6 +80,7 @@ export async function PUT(request: NextRequest) {
   const requestJson = await request.json();
 
   const parseResult = editProfileSchema.safeParse(requestJson);
+  const userId = requestJson.id;
 
   if (!parseResult.success) {
     return NextResponse.json(
@@ -94,6 +95,7 @@ export async function PUT(request: NextRequest) {
 
   const updatedUser = {
     ...parsedResults,
+    id: userId,
     birthDate: requestJson?.birthDate ? new Date(requestJson.birthDate) : null,
     imageId: requestJson?.imageId ? requestJson.imageId : null,
   };

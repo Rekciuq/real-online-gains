@@ -37,12 +37,6 @@ class ImageUploadAPIService {
   };
 
   static deleteImage = async (image: Image) => {
-    const isDeletedFromFs = this.unwriteImage(image.url);
-
-    if (!isDeletedFromFs) {
-      return { error: IMAGE_FS_NOT_FOUND, response: null };
-    }
-
     const [error, response] = await handlePromiseServer(() =>
       prisma.image.delete({
         where: {
@@ -50,6 +44,12 @@ class ImageUploadAPIService {
         },
       }),
     );
+
+    const isDeletedFromFs = this.unwriteImage(image.url);
+
+    if (!isDeletedFromFs) {
+      return { error: IMAGE_FS_NOT_FOUND, response: null };
+    }
 
     return { error, response };
   };

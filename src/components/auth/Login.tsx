@@ -9,17 +9,17 @@ import { LOGIN_HEADER } from "@/constants/text/header";
 import { BUTTON_LOGIN_TEXT } from "@/constants/text/buttons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { KEY_GET_IMAGE } from "@/constants/tanstackQueryKeys";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SessionService from "@/services/client/SessionService";
 import { useRouter } from "next/navigation";
 import { TOAST_MESSAGE_SUCCESS_LOGIN } from "@/constants/toastMessages/success";
-import useHandleResponseClient from "@/hooks/useHandleResponseClient.hook";
 import LocalStorageService from "@/services/client/LocalStorageService";
 import { LOCAL_IMAGE, LOCAL_USER } from "@/constants/localStorageItems";
-import { CHATS_ROUTE } from "@/constants/routes";
+import { CHATS_ROUTE, LOGOUT_ROUTE } from "@/constants/routes";
 import ImageClientService from "@/services/client/ImageClientService";
 import { User } from "@prisma/client";
 import ToastEmitter from "@/services/client/ToastEmitter";
+import { TOAST_MESSAGE_ERROR_BLOCKED } from "@/constants/toastMessages/error";
 
 const sessionService = new SessionService();
 const imageClientService = new ImageClientService();
@@ -28,11 +28,11 @@ const Login = () => {
   const [userData, setUserData] = useState<User | null>(null);
   const [isUserSuccess, setIsUserSuccess] = useState(false);
 
-  const { isPending, mutate: createSession } = useMutation<
-    User,
-    string,
-    LoginSchemaType
-  >({
+  const {
+    isPending,
+    mutate: createSession,
+    isSuccess,
+  } = useMutation<User, string, LoginSchemaType>({
     mutationFn: (user) => {
       return sessionService.createSession(user);
     },
@@ -46,26 +46,25 @@ const Login = () => {
     },
   });
 
-  const {
-    isLoading: isImageLoading,
-    data: imageData,
-    error: imageError,
-  } = useQuery({
+  const { isLoading: isImageLoading, data: imageData } = useQuery({
     queryKey: KEY_GET_IMAGE,
     queryFn: () => userData && imageClientService.getImage(userData.imageId),
     enabled: isUserSuccess,
   });
 
-  useHandleResponseClient({
-    data: imageData,
-    error: imageError,
-    successMessage: TOAST_MESSAGE_SUCCESS_LOGIN,
-    router: router,
-    link: CHATS_ROUTE,
-    dataCb: () => {
+  useEffect(() => {
+    if (imageData && isSuccess) {
+      if (userData?.isBlocked) {
+        ToastEmitter.error(TOAST_MESSAGE_ERROR_BLOCKED);
+        router.push(LOGOUT_ROUTE);
+        return;
+      }
+
       LocalStorageService.setItem(LOCAL_IMAGE, imageData);
-    },
-  });
+      ToastEmitter.success(TOAST_MESSAGE_SUCCESS_LOGIN);
+      router.push(CHATS_ROUTE);
+    }
+  }, [imageData, isSuccess, router, userData?.isBlocked]);
 
   const handleSubmit = (fieldValues: LoginSchemaType) => {
     createSession(fieldValues);

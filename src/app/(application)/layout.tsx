@@ -2,6 +2,7 @@
 
 import Header from "@/components/app/layout/header/Header";
 import SideBar from "@/components/app/layout/sidebar/SideBar";
+import Card from "@/components/ui/card/Card";
 import { LOCAL_IMAGE, LOCAL_USER } from "@/constants/localStorageItems";
 import { LOGOUT_ROUTE } from "@/constants/routes";
 import LocalStorageService from "@/services/client/LocalStorageService";
@@ -41,7 +42,9 @@ export default function AppLayout({
         imageSrc={image?.url}
       />
       {showNavigation && <SideBar />}
-      <div className="p-10 m-10 flex justify-center">{children}</div>
+      <div className="p-10 m-10 flex justify-center">
+        <Card className="w-fit">{children}</Card>
+      </div>
     </div>
   );
 }

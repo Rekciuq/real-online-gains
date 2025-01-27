@@ -9,3 +9,4 @@ export const IMAGE_UPLOAD_ERROR =
   "An error occurred while uploading the image.";
 export const IMAGE_DELETE_ERROR = "Deletion of the image was aborted.";
 export const IMAGE_FS_NOT_FOUND = "Image is not exists in database!";
+export const USER_NOT_FOUND_ERROR = "User was not found";

@@ -1,7 +1,8 @@
+import { DB_ADMIN_ROLE } from "@/constants/database";
 import prisma from "@/lib/prisma";
 import { SeedUser } from "@/seed/types";
-import { EditProfileType } from "@/types/schemas";
 import { handlePromiseServer } from "@/utils/handlePromiseServer";
+import { User } from "@prisma/client";
 
 class UserService {
   static createUser = async (newUser: SeedUser) => {
@@ -13,11 +14,11 @@ class UserService {
     return { error, response };
   };
 
-  static updateUser = async (user: EditProfileType) => {
+  static updateUser = async (user: Partial<User>) => {
     const [error, response] = await handlePromiseServer(() =>
       prisma.user.update({
         where: {
-          email: user.email,
+          id: user.id,
         },
         data: user,
       }),
@@ -38,7 +39,28 @@ class UserService {
 
   static getUsers = async () => {
     const [error, response] = await handlePromiseServer(() =>
-      prisma.user.findMany(),
+      prisma.user.findMany({
+        include: {
+          image: true,
+        },
+        where: {
+          roleId: {
+            not: DB_ADMIN_ROLE,
+          },
+        },
+      }),
+    );
+
+    return { error, response };
+  };
+
+  static deleteUser = async (userId: number) => {
+    const [error, response] = await handlePromiseServer(() =>
+      prisma.user.delete({
+        where: {
+          id: userId,
+        },
+      }),
     );
 
     return { error, response };
