@@ -1,3 +1,4 @@
+"use server";
 import {
   ACCESS_TOKEN,
   ACCESS_TOKEN_LIFETIME,
@@ -19,25 +20,28 @@ class JWTTokenService {
 
   private generateToken = (
     userId: number,
+    roleId: number,
     type: TOKEN_TYPE,
     expiresIn: string,
   ) => {
     return jwt.sign(
-      { userId: userId },
+      { userId: userId, roleId: roleId },
       type === "access" ? this.accessTokenSecret : this.refreshTokenSecret,
       { expiresIn: expiresIn },
     );
   };
 
-  generateTokens = (userId: number) => {
+  generateTokens = (userId: number, roleId: number) => {
     const accessToken = this.generateToken(
       userId,
+      roleId,
       ACCESS_TOKEN,
       ACCESS_TOKEN_LIFETIME,
     );
 
     const refreshToken = this.generateToken(
       userId,
+      roleId,
       REFRESH_TOKEN,
       REFRESH_TOKEN_LIFETIME,
     );

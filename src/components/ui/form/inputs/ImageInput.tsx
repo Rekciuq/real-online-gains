@@ -3,18 +3,49 @@ import { IMAGE_INPUT_TYPE, TEXT_INPUT_TYPE } from "@/constants/inputTypes";
 import { cn } from "@/lib/utils";
 import { InputsTypeProps } from "@/types/common";
 import Image from "next/image";
-import { SyntheticEvent, useRef, useState } from "react";
+import { SyntheticEvent, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 const ImageInput = ({ id, className, ...props }: InputsTypeProps) => {
   const {
     register,
-    formState: { errors },
+    formState: { errors, defaultValues },
+    setValue,
     trigger,
   } = useFormContext();
   const imageRef = useRef<HTMLInputElement | null>(null);
   const [imagePath, setImagePath] = useState("");
   const [imageDisplayPath, setImageDisplayPath] = useState("");
+
+  useEffect(() => {
+    if (!defaultValues?.[id] || imagePath || imageDisplayPath) {
+      return;
+    }
+    const defaultImagePath = defaultValues[id];
+    const imageName = defaultImagePath.split("/").at(-1);
+
+    setImagePath(imageName);
+    setImageDisplayPath(defaultImagePath);
+
+    const imitateImage = async () => {
+      const response = await fetch(defaultImagePath);
+      const blob = await response.blob();
+      const defaultFile = new File([blob], imageName, { type: blob.type });
+      setValue(id, defaultFile);
+
+      if (imageRef.current) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(defaultFile);
+
+        imageRef.current.files = dataTransfer.files;
+
+        const event = new Event("change", { bubbles: true });
+        imageRef.current.dispatchEvent(event);
+      }
+    };
+
+    imitateImage();
+  }, []);
 
   const { ref, ...rest } = register(id, {
     onChange: (event) => {

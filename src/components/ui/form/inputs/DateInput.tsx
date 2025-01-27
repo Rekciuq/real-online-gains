@@ -1,13 +1,13 @@
 import { DATE_INPUT_TYPE } from "@/constants/inputTypes";
 import { cn } from "@/lib/utils";
 import { InputsTypeProps } from "@/types/common";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 const DateInput = ({ id, className, ...props }: InputsTypeProps) => {
   const {
     register,
-    formState: { errors },
+    formState: { errors, defaultValues },
   } = useFormContext();
   const dateRef = useRef<HTMLInputElement | null>(null);
   const [dateValue, setDateValue] = useState("");
@@ -17,6 +17,13 @@ const DateInput = ({ id, className, ...props }: InputsTypeProps) => {
   const { ref, ...rest } = register(id, {
     onChange: (event) => setDateValue(event.target.value),
   });
+
+  useEffect(() => {
+    if (defaultValues?.[id] && dateRef.current) {
+      dateRef.current.value = defaultValues[id].toString();
+      setDateValue(defaultValues[id].toString());
+    }
+  }, []);
 
   const clearInput = () => {
     const clearedValue = "";
