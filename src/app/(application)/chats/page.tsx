@@ -41,9 +41,8 @@ const ChatsPage = () => {
   useEffect(() => {
     const user = LocalStorageService.getItem(LOCAL_USER);
     setUser(user);
-    console.log(data);
     if (error) ToastEmitter.error(error as unknown as string);
-  }, [error, data]);
+  }, [error]);
 
   return (
     <div className="flex">
@@ -67,6 +66,7 @@ const ChatsPage = () => {
                   href={CHATS_ROUTE + `/${item?.chatRoom?.id}`}
                 >
                   <Message
+                    headerContainerClassname="w-96 max-md:w-48"
                     userName={
                       item?.user?.firstName ||
                       item?.user?.lastName ||

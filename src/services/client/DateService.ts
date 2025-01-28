@@ -1,5 +1,3 @@
-"use client";
-
 class DateService {
   static formatSmallDate(date: Date) {
     const day = String(date.getDate()).padStart(2, "0");
@@ -8,6 +6,7 @@ class DateService {
 
     return `${day}-${month}-${year}`;
   }
+
   static formatFullDate(date: Date) {
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");

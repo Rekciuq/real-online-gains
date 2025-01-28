@@ -13,7 +13,7 @@ const TextArea = ({ id, className, ...props }: TextAreaProps) => {
     formState: { errors },
   } = useFormContext();
   const defaultClassNames =
-    "border border-emerald-100 rounded-md py-1 px-2 hover:border-emerald-200 focus-visible:outline-emerald-400";
+    "border border-emerald-100 resize-none rounded-md py-1 px-2 hover:border-emerald-200 focus-visible:outline-emerald-400";
 
   return (
     <textarea

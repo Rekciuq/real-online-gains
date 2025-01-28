@@ -92,18 +92,18 @@ const AdminDashboardPage = () => {
               />
               <div className="grid grid-cols-[_minmax(20px,_1fr)] gap-2 p-5">
                 <p className="text-emerald-500 font-semibold">Email</p>
-                <p className="text-center">{user.email}</p>
+                <p>{user.email}</p>
                 <p className="text-emerald-500 font-semibold">Bio</p>
-                <p className="text-center">{user.bio}</p>
+                <p>{user.bio}</p>
                 <p className="text-emerald-500 font-semibold">Gender</p>
-                <p className="text-center">{user.gender}</p>
+                <p>{user.gender}</p>
                 <p className="text-emerald-500 font-semibold">Birth date</p>
-                <p className="text-center">
+                <p>
                   {user.birthDate &&
                     new Date(user.birthDate).toISOString().split("T")[0]}
                 </p>
                 <p className="text-emerald-500 font-semibold">Role</p>
-                <p className="font-semibold text-center">
+                <p className="font-semibold">
                   {DB_ROLES[user.roleId as keyof typeof DB_ROLES]}
                 </p>
               </div>

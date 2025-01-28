@@ -49,7 +49,7 @@ const ModalWindow = ({ className, setShow, children }: ModalWindowProps) => {
   return (
     <div
       id={modalWindowId}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed overflow-auto inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={closeModal}
       onKeyUp={onEscUp}
       ref={modalRef}

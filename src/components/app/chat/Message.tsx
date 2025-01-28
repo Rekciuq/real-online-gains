@@ -1,5 +1,6 @@
 import Img from "@/components/ui/Img";
 import { MESSAGE_PLACEHOLDER } from "@/constants/text/messages";
+import { cn } from "@/lib/utils";
 import DateService from "@/services/client/DateService";
 import { ComponentPropsWithoutRef } from "react";
 
@@ -8,12 +9,14 @@ type MessageProps = ComponentPropsWithoutRef<"div"> & {
   createdAt?: Date;
   messageText?: string;
   imageSrc: string;
+  headerContainerClassname?: string;
 };
 
 const Message = ({
   userName,
   createdAt,
   messageText,
+  headerContainerClassname,
   imageSrc,
   ...props
 }: MessageProps) => {
@@ -22,7 +25,12 @@ const Message = ({
       className="flex flex-col gap-5 text-start hover:bg-emerald-50 select-none cursor-pointer rounded-md transition-colors p-2"
       {...props}
     >
-      <div className="flex justify-between items-center w-96 max-md:w-48">
+      <div
+        className={cn(
+          "flex justify-between items-center",
+          headerContainerClassname,
+        )}
+      >
         <div className="flex gap-3 items-center w-full">
           <Img src={imageSrc} className="h-10 w-10" alt="Profile Picture" />
           <p>{userName}</p>
