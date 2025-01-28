@@ -4,9 +4,36 @@ import Form from "@/components/ui/form/Form";
 import InputGroup from "@/components/ui/form/inputs/InputGroup";
 import { BUTTON_SEND_MESSAGE } from "@/constants/text/buttons";
 import sendMessageSchema from "@/schemas/chats/sendMessage.schema";
+import ChatsClientService from "@/services/client/ChatsClientService";
+import ToastEmitter from "@/services/client/ToastEmitter";
 import { SendMessageSchemaType } from "@/types/schemas";
+import { useQuery } from "@tanstack/react-query";
+import { Params } from "next/dist/server/request/params";
+import { useEffect, useState } from "react";
 
-const ChatPage = (params) => {
+const chatService = new ChatsClientService();
+const ChatPage = ({ params }: { params: Promise<Params> }) => {
+  const [chatId, setChatId] = useState<number | null>(null);
+
+  const { data, error } = useQuery({
+    queryKey: ["ChatRoom", chatId],
+    queryFn: () => !!chatId! && chatService.getChat(chatId),
+    enabled: !!chatId,
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const paramsChatId = await params;
+        setChatId(Number(paramsChatId.chatId));
+      } catch (error) {
+        if (error instanceof Error) {
+          ToastEmitter.error(error.message);
+        }
+      }
+    })();
+  }, [params]);
+
   const handleSubmit = (thing: SendMessageSchemaType) => {};
   return (
     <div className="w-[1150px]">

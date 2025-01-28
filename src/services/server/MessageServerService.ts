@@ -1,9 +1,14 @@
-import { DB_TRAINER_ROLE, DB_USER_ROLE } from "@/constants/database";
+import {
+  DB_ADMIN_ROLE,
+  DB_TRAINER_ROLE,
+  DB_USER_ROLE,
+} from "@/constants/database";
 import prisma from "@/lib/prisma";
 import { handlePromiseServer } from "@/utils/handlePromiseServer";
 
 class MessageServerService {
   static getChats = async (userId: number, roleId: number) => {
+    if (roleId === DB_ADMIN_ROLE) return { error: null, response: [] };
     const [error, response] = await handlePromiseServer(async () => {
       const roleFilter =
         roleId === DB_USER_ROLE ? DB_TRAINER_ROLE : DB_USER_ROLE;
