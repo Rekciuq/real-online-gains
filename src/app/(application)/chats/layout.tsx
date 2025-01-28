@@ -2,6 +2,6 @@ type ChatsLayoutProps = {
   children: React.ReactNode;
 };
 
-const ChatsLayout = ({ children }: ChatsLayoutProps) => <div>{children}</div>;
+const ChatsLayout = ({ children }: ChatsLayoutProps) => <>{children}</>;
 
 export default ChatsLayout;

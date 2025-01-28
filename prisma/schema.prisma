@@ -11,20 +11,56 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  firstName String?
-  lastName  String?
-  email     String    @unique
-  password  String
-  image     Image     @relation(fields: [imageId], references: [id])
-  bio       String?
-  gender    String?
-  birthDate DateTime?
-  isBlocked Boolean   @default(false)
-  roleId    Int
-  role      Role      @relation(fields: [roleId], references: [id])
-  session   Session[]
-  imageId   Int
+  id              Int           @id @default(autoincrement())
+  firstName       String?
+  lastName        String?
+  email           String        @unique
+  password        String
+  image           Image         @relation(fields: [imageId], references: [id])
+  bio             String?
+  gender          String?
+  birthDate       DateTime?
+  isBlocked       Boolean       @default(false)
+  roleId          Int
+  role            Role          @relation(fields: [roleId], references: [id])
+  session         Session[]
+  imageId         Int
+  UserMessage     UserMessage[]
+  trainerChatRoom ChatRoom[]    @relation("ChatRoomTrainer")
+  UserChatRoom    ChatRoom[]    @relation("ChatRoomUser")
+}
+
+model Message {
+  id           Int           @id @default(autoincrement())
+  content      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  userMessages UserMessage[]
+}
+
+model UserMessage {
+  id         Int      @id @default(autoincrement())
+  messageId  Int
+  message    Message  @relation(fields: [messageId], references: [id])
+  authorId   Int
+  createdAt  DateTime @default(now())
+  chatRoomId Int
+  ChatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  User       User     @relation(fields: [authorId], references: [id])
+
+  @@unique([authorId, messageId])
+  @@index([authorId])
+  @@index([messageId])
+}
+
+model ChatRoom {
+  id           Int           @id @default(autoincrement())
+  UserMessages UserMessage[]
+  createdAt    DateTime      @default(now())
+  trainerId    Int
+  userId       Int
+  trainer      User          @relation("ChatRoomTrainer", fields: [trainerId], references: [id])
+  user         User          @relation("ChatRoomUser", fields: [userId], references: [id])
 }
 
 model Image {

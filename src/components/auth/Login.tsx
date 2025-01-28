@@ -64,7 +64,7 @@ const Login = () => {
       ToastEmitter.success(TOAST_MESSAGE_SUCCESS_LOGIN);
       router.push(CHATS_ROUTE);
     }
-  }, [imageData, isSuccess, router, userData?.isBlocked]);
+  }, [imageData, isSuccess, router, userData]);
 
   const handleSubmit = (fieldValues: LoginSchemaType) => {
     createSession(fieldValues);

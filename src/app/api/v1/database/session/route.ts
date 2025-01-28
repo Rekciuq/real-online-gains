@@ -19,6 +19,7 @@ import {
   WRONG_JWT_TOKEN_ERROR,
 } from "@/constants/errors/api-server-errors";
 import { LOGGED_OUT } from "@/constants/success/api";
+import { TOAST_MESSAGE_ERROR_BLOCKED } from "@/constants/toastMessages/error";
 
 const jwtService = new JWTTokenService();
 export async function POST(request: NextRequest) {
@@ -41,6 +42,13 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json(
       { message: error },
+      { status: HTTP_BAD_REQUEST_CODE },
+    );
+  }
+
+  if (response!.isBlocked) {
+    return NextResponse.json(
+      { message: TOAST_MESSAGE_ERROR_BLOCKED },
       { status: HTTP_BAD_REQUEST_CODE },
     );
   }
